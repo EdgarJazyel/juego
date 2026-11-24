@@ -2,88 +2,243 @@
 <html lang="es">
 <head>
 <meta charset="utf-8">
-<meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1">
-<title>Aventura Metabólica · Multijugador</title>
+<meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1, user-scalable=no">
+<title>Aventura Metabólica · Juego Cooperativo</title>
 <script src="https://unpkg.com/peerjs@1.5.4/dist/peerjs.min.js"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/qrcodejs/1.0.0/qrcode.min.js"></script>
 <style>
 @import url('https://fonts.googleapis.com/css2?family=Nunito:wght@400;700;900&family=Orbitron:wght@600;800&display=swap');
-:root{--night:#071426;--panel:#10243b;--cyan:#56e0ec;--mint:#8ff0bd;--gold:#ffd166;--white:#f3f8ff;--muted:#adc2d7;--pink:#ff82b2}
-*{box-sizing:border-box}
-body{margin:0;min-height:100vh;background:radial-gradient(ellipse at 50% -15%,#25577a 0,#0a1c32 48%,#050d19 100%);color:var(--white);font-family:Nunito,system-ui,sans-serif}
+:root{
+  --night:#071426;--panel:#10243b;--cyan:#56e0ec;--mint:#8ff0bd;
+  --gold:#ffd166;--white:#f3f8ff;--muted:#adc2d7;--pink:#ff6b9d;--orange:#ff9f43
+}
+*{box-sizing:border-box;-webkit-tap-highlight-color:transparent}
+body{
+  margin:0;min-height:100vh;color:var(--white);
+  background:radial-gradient(ellipse at 50% -15%,#25577a 0,#0a1c32 48%,#050d19 100%);
+  font-family:Nunito,system-ui,sans-serif
+}
 button,input{font:inherit}
-button{cursor:pointer;border:0;border-radius:14px;padding:12px 17px;font-weight:900;background:linear-gradient(135deg,var(--cyan),var(--mint));color:#052031;box-shadow:0 5px 0 #247d88;transition:.15s}
+button{
+  cursor:pointer;border:0;border-radius:14px;padding:12px 17px;font-weight:900;
+  background:linear-gradient(135deg,var(--cyan),var(--mint));color:#052031;
+  box-shadow:0 5px 0 #247d88;transition:.12s;touch-action:manipulation
+}
 button:active{transform:translateY(3px);box-shadow:0 2px 0 #247d88}
 button:disabled{opacity:.45;cursor:not-allowed;transform:none}
-button.secondary{background:#284660;color:#fff;box-shadow:none;border:1px solid #456887}
-button.secondary:hover:not(:disabled){background:#345a7a}
-.wrap{max-width:1120px;margin:auto;padding:14px}
-.top{text-align:center;padding:20px 10px 12px}
-.logo{font-family:Orbitron,sans-serif;letter-spacing:2px;font-size:clamp(24px,5vw,46px);font-weight:800;text-shadow:0 0 22px #56e0ec66}
-.tag{display:inline-block;padding:6px 12px;border:1px solid #4e9ab0;border-radius:99px;color:var(--cyan);font-size:12px;font-weight:900;letter-spacing:1px}
-.sub{color:var(--muted);margin:8px 0}
+button.secondary{background:#24415d;color:#fff;box-shadow:none;border:1px solid #456887}
+button.secondary:hover:not(:disabled){background:#315678}
+.wrap{max-width:1140px;margin:auto;padding:14px}
+.top{text-align:center;padding:18px 10px 10px}
+.logo{font-family:Orbitron,sans-serif;letter-spacing:2px;font-size:clamp(22px,5vw,44px);font-weight:800;text-shadow:0 0 22px #56e0ec66}
+.tag{display:inline-block;padding:5px 12px;border:1px solid #4e9ab0;border-radius:99px;color:var(--cyan);font-size:11px;font-weight:900;letter-spacing:1px}
+.sub{color:var(--muted);margin:6px 0 0}
 .panel{background:linear-gradient(145deg,#142c46ee,#0c1d31f2);border:1px solid #315879;border-radius:22px;padding:18px;box-shadow:0 16px 45px #0005;margin:12px 0}
-.panel h2{margin:0 0 10px;color:var(--cyan);font-size:21px}
-.grid{display:grid;grid-template-columns:repeat(auto-fit,minmax(270px,1fr));gap:14px}
+.panel h2{margin:0 0 10px;color:var(--cyan);font-size:20px}
+.grid{display:grid;grid-template-columns:repeat(auto-fit,minmax(275px,1fr));gap:14px}
 .tabs{display:flex;gap:10px;margin-bottom:16px}
 .tabs button{flex:1;background:#1a3652;color:#d6e9f8;box-shadow:none;border:1px solid #3c607e;padding:13px}
 .tabs button.active{background:linear-gradient(135deg,var(--cyan),var(--mint));color:#052031;border-color:transparent}
 .field{width:100%;padding:13px;border-radius:12px;border:1px solid #41617d;background:#07182b;color:white;margin:6px 0 13px;outline:none}
 .field:focus{border-color:var(--cyan)}
 .code-input{font-family:Orbitron,sans-serif;letter-spacing:6px;text-transform:uppercase;text-align:center;font-size:22px;font-weight:800}
+.qr-ready-badge{
+  background:#0f3a36;border:1px solid var(--mint);color:var(--mint);
+  padding:10px 14px;border-radius:12px;font-weight:800;margin-bottom:12px;
+  display:flex;align-items:center;justify-content:space-between;gap:8px;font-size:13px
+}
 .gender{display:flex;gap:10px;margin-top:6px}
 .gender button{flex:1;background:#24415d;color:#eaf7ff;box-shadow:none;border:1px solid #456887}
 .gender button.selected{background:#d9faff;color:#09243a;border:2px solid var(--cyan)}
 .avatar-grid{display:grid;grid-template-columns:repeat(4,1fr);gap:8px;margin:8px 0 15px}
-.avatar{padding:8px 3px;background:#203d58;color:white;border:2px solid transparent;box-shadow:none;border-radius:14px}
-.avatar.selected{border-color:var(--gold);background:#31536f}
-.avatar .face{display:block;font-size:32px}
-.avatar small{font-size:11px}
+.avatar{padding:10px 4px;background:#203d58;color:white;border:2px solid transparent;box-shadow:none;border-radius:14px}
+.avatar.selected{border-color:var(--gold);background:#31536f;transform:scale(1.04)}
+.avatar .face{display:block;font-size:34px;line-height:1.1}
 .mini{color:var(--muted);font-size:13px}
 .hidden{display:none!important}
 .row{display:flex;gap:10px;align-items:center;justify-content:space-between;flex-wrap:wrap}
-.stats{display:grid;grid-template-columns:repeat(3,1fr);gap:9px;margin-top:10px}
-.stat{background:#0a1b2d;border:1px solid #284966;border-radius:15px;padding:12px;text-align:center}
-.stat b{display:block;font-family:Orbitron;font-size:24px;color:var(--gold)}
-.stat span{font-size:11px;color:var(--muted)}
-.room-box{background:#07192b;border:2px dashed var(--cyan);border-radius:16px;padding:12px 18px;display:flex;align-items:center;gap:14px;flex-wrap:wrap}
+
+/* Panel QR del docente */
+.host-bar{display:flex;gap:16px;align-items:center;justify-content:space-between;flex-wrap:wrap}
+.qr-card{
+  display:flex;align-items:center;gap:14px;background:#081a2d;
+  border:2px dashed var(--cyan);border-radius:18px;padding:12px 16px;flex-wrap:wrap
+}
+.qr-white{background:#fff;padding:8px;border-radius:12px;display:grid;place-items:center;min-width:116px;min-height:116px}
+.qr-white img,.qr-white canvas{display:block;width:100px!important;height:100px!important}
 .room-code{font-family:Orbitron,sans-serif;font-size:30px;font-weight:800;letter-spacing:5px;color:var(--gold)}
-.map{position:relative;overflow:hidden;min-height:245px;border-radius:18px;border:1px solid #3a6785;background:radial-gradient(circle at 50% 50%,#194c67,#0a2138 67%,#08182b);padding:15px}
-.map:before{content:"";position:absolute;inset:0;background-image:linear-gradient(#6eddeb0b 1px,transparent 1px),linear-gradient(90deg,#6eddeb0b 1px,transparent 1px);background-size:28px 28px}
-.route{position:absolute;left:8%;right:8%;top:50%;height:4px;background:linear-gradient(90deg,#56e0ec,#8ff0bd,#ffd166);box-shadow:0 0 14px #56e0ec;transform:rotate(-4deg)}
-.nodes{position:relative;display:flex;justify-content:space-around;align-items:center;min-height:215px;gap:4px}
-.node{z-index:1;text-align:center;width:19%;font-size:12px;color:#d8f3ff}
-.orb{width:54px;height:54px;margin:0 auto 8px;border-radius:50%;display:grid;place-items:center;font-size:26px;background:#153c58;border:2px solid #64dce8;box-shadow:0 0 18px #56e0ec55;transition:.3s}
+
+/* Modal QR gigante */
+.modal{
+  position:fixed;inset:0;background:#030b16e8;z-index:999;
+  display:grid;place-items:center;padding:20px
+}
+.modal-card{
+  background:#112740;border:2px solid var(--cyan);border-radius:24px;
+  padding:24px;text-align:center;max-width:420px;width:100%;box-shadow:0 20px 60px #000a
+}
+.modal-qr{background:#fff;padding:14px;border-radius:16px;display:inline-block;margin:14px 0}
+.modal-qr img,.modal-qr canvas{display:block;width:240px!important;height:240px!important}
+
+/* Medidor de Glucemia + Stats */
+.glucose-box{
+  background:#091a2c;border:1px solid #2b4f6e;border-radius:16px;padding:12px 15px;margin:12px 0
+}
+.glucose-head{display:flex;justify-content:space-between;align-items:center;font-weight:900;font-size:14px;margin-bottom:8px;gap:8px;flex-wrap:wrap}
+.glucose-track{height:16px;background:#1c334a;border-radius:99px;overflow:hidden;position:relative}
+.glucose-fill{height:100%;width:75%;border-radius:99px;background:linear-gradient(90deg,var(--pink),var(--gold),var(--mint));transition:width .35s}
+.stats{display:grid;grid-template-columns:repeat(3,1fr);gap:9px;margin-top:10px}
+.stat{background:#0a1b2d;border:1px solid #284966;border-radius:15px;padding:11px;text-align:center}
+.stat b{display:block;font-family:Orbitron;font-size:22px;color:var(--gold)}
+.stat span{font-size:11px;color:var(--muted)}
+
+/* Mapa de órganos */
+.map{position:relative;overflow:hidden;min-height:150px;border-radius:18px;border:1px solid #3a6785;background:radial-gradient(circle at 50% 50%,#194c67,#0a2138 67%,#08182b);padding:12px 8px;margin-top:12px}
+.route{position:absolute;left:8%;right:8%;top:44%;height:4px;background:linear-gradient(90deg,#56e0ec,#8ff0bd,#ffd166);box-shadow:0 0 12px #56e0ec}
+.nodes{position:relative;display:flex;justify-content:space-around;align-items:center;min-height:120px;gap:4px}
+.node{z-index:1;text-align:center;width:19%;font-size:11px;color:#d8f3ff}
+.orb{width:48px;height:48px;margin:0 auto 6px;border-radius:50%;display:grid;place-items:center;font-size:23px;background:#153c58;border:2px solid #64dce8;box-shadow:0 0 14px #56e0ec55;transition:.3s}
 .node.done .orb{background:#1d6c5b;border-color:var(--mint)}
-.node.active .orb{border:3px solid var(--gold);box-shadow:0 0 22px #ffd16699;transform:scale(1.12)}
-.players{display:grid;grid-template-columns:repeat(auto-fill,minmax(138px,1fr));gap:8px}
+.node.active .orb{border:3px solid var(--gold);box-shadow:0 0 22px #ffd166aa;transform:scale(1.15)}
+
+/* Barra de progreso de misión */
+.goal-bar-wrap{margin:10px 0 14px}
+.goal-track{height:14px;background:#1c334a;border-radius:99px;overflow:hidden;margin-top:6px}
+.goal-fill{height:100%;width:0%;background:linear-gradient(90deg,var(--cyan),var(--mint),var(--gold));transition:width .25s}
+
+/* Zona de minijuegos interactivos */
+.arena-shell{
+  border:1px solid #42718c;background:linear-gradient(145deg,#12304a,#0a1e33);
+  border-radius:18px;padding:16px;user-select:none;-webkit-user-select:none
+}
+.arena-title{display:flex;justify-content:space-between;align-items:center;gap:8px;flex-wrap:wrap;margin-bottom:8px}
+.combo-pill{background:#3b2d0c;border:1px solid var(--gold);color:var(--gold);padding:4px 10px;border-radius:99px;font-size:12px;font-weight:900}
+.playfield{
+  position:relative;height:310px;border-radius:16px;overflow:hidden;
+  background:radial-gradient(circle at 50% 35%,#153b56,#071626 85%);
+  border:2px solid #2f5b78;margin-top:10px;touch-action:none
+}
+.playfield:before{
+  content:"";position:absolute;inset:0;pointer-events:none;
+  background-image:radial-gradient(#56e0ec18 1px,transparent 1px);background-size:22px 22px
+}
+
+/* Estación 1: Moléculas flotantes */
+.mol-btn{
+  position:absolute;left:0;top:0;padding:10px 14px;border-radius:99px;font-size:14px;font-weight:900;
+  background:linear-gradient(135deg,#1f4e6e,#123249);color:#fff;border:2px solid var(--cyan);
+  box-shadow:0 6px 16px #0006;white-space:nowrap;will-change:transform;touch-action:manipulation
+}
+.mol-btn:active{transform:scale(.92)}
+
+/* Estación 2: Triglicérido / Lipólisis */
+.lab-stage{
+  display:flex;flex-direction:column;align-items:center;justify-content:center;
+  height:100%;padding:14px;text-align:center;gap:12px
+}
+.trig-box{
+  display:flex;align-items:center;justify-content:center;gap:10px;
+  background:#0a2236;border:2px solid #3c6d8c;border-radius:18px;padding:14px 18px;flex-wrap:wrap
+}
+.glyc-core{
+  background:linear-gradient(135deg,var(--gold),#ff9f43);color:#201100;
+  padding:14px 16px;border-radius:14px;font-weight:900;font-size:15px;box-shadow:0 0 18px #ffd16655
+}
+.fa-list{display:flex;flex-direction:column;gap:6px}
+.fa-chain{
+  background:#234663;border:1px solid #4e7d9e;color:#d6efff;padding:6px 12px;
+  border-radius:10px;font-size:12px;font-weight:800;transition:.25s
+}
+.fa-chain.cut{opacity:.25;transform:translateX(26px) rotate(6deg);text-decoration:line-through}
+.choice-grid{display:grid;grid-template-columns:repeat(2,1fr);gap:10px;width:100%;max-width:440px}
+.tile-btn{
+  background:#1c3d59;color:#fff;border:2px solid #487393;box-shadow:none;padding:14px 10px;
+  font-size:14px;border-radius:14px
+}
+.tile-btn:hover{border-color:var(--cyan);background:#255073}
+
+/* Estación 3: Reactor Gluconeogénesis */
+.valve-grid{display:grid;gap:10px;width:100%;max-width:420px}
+.reactor-steps{display:flex;gap:8px;justify-content:center;margin-bottom:6px;flex-wrap:wrap}
+.r-step{padding:5px 10px;border-radius:99px;font-size:11px;font-weight:900;background:#153149;color:var(--muted);border:1px solid #325978}
+.r-step.now{background:#124a4c;color:var(--mint);border-color:var(--mint)}
+.r-step.ok{background:#1c5f48;color:#fff;border-color:var(--mint)}
+.core-tap{
+  width:140px;height:140px;border-radius:50%;font-size:16px;
+  background:radial-gradient(circle,#8ff0bd,#24a8b8);color:#04202b;
+  box-shadow:0 0 28px #56e0ec88;animation:pulse 1.1s infinite
+}
+@keyframes pulse{0%,100%{transform:scale(1)}50%{transform:scale(1.06)}}
+
+/* Estación 4: Cadena de Glucógeno */
+.chain-row{display:flex;align-items:center;justify-content:center;gap:6px;flex-wrap:wrap;margin:10px 0}
+.g-node{
+  width:52px;height:52px;border-radius:14px;display:grid;place-items:center;
+  font-weight:900;font-size:14px;background:#1a3c58;border:2px solid #4a7899;color:#cfeaff;
+  transition:.2s;padding:0;box-shadow:none
+}
+.g-node.target{
+  background:linear-gradient(135deg,var(--gold),var(--mint));color:#06202e;
+  border-color:#fff;box-shadow:0 0 22px #ffd166aa;animation:pulse .85s infinite
+}
+.g-node.done{opacity:.18;transform:scale(.7)}
+
+/* Estación 5: Escolta Sanguínea */
+.organ-grid{display:grid;grid-template-columns:repeat(2,1fr);gap:12px;width:100%;max-width:480px;padding:12px}
+.organ-card{
+  background:#122e47;border:2px solid #355d7d;border-radius:16px;padding:14px 10px;
+  color:#fff;box-shadow:none;display:flex;flex-direction:column;align-items:center;gap:4px;min-height:112px;justify-content:center
+}
+.organ-card .ico{font-size:30px}
+.organ-card small{font-size:11px;color:var(--muted);font-weight:700}
+.organ-card.urgent{
+  border-color:var(--mint);background:#12454c;box-shadow:0 0 22px #8ff0bd66;animation:pulse .9s infinite
+}
+.organ-card.trap{border-color:#5b4a69;background:#241c36}
+
+/* Feedback flotante y sacudida */
+.float-pop{
+  position:absolute;left:50%;top:18px;transform:translateX(-50%);z-index:20;
+  padding:7px 14px;border-radius:99px;font-weight:900;font-size:13px;
+  pointer-events:none;animation:popUp .95s forwards;white-space:nowrap
+}
+.float-pop.ok{background:#124d43;border:1px solid var(--mint);color:var(--mint)}
+.float-pop.bad{background:#52182d;border:1px solid var(--pink);color:#ffd2e2}
+@keyframes popUp{0%{opacity:0;transform:translate(-50%,10px)}20%{opacity:1;transform:translate(-50%,0)}100%{opacity:0;transform:translate(-50%,-22px)}}
+.shake{animation:shakeAnim .28s}
+@keyframes shakeAnim{0%,100%{transform:translateX(0)}25%{transform:translateX(-7px)}75%{transform:translateX(7px)}}
+
+/* Pantalla de transición / victoria */
+.banner-clear{
+  text-align:center;padding:24px 14px;border-radius:16px;
+  background:radial-gradient(circle,#164b4f,#0d2538);border:2px solid var(--mint)
+}
+.podium{display:grid;grid-template-columns:repeat(auto-fit,minmax(130px,1fr));gap:10px;margin:14px 0}
+.podium-item{background:#0b1e32;border:1px solid var(--gold);border-radius:14px;padding:12px;text-align:center}
+
+/* Jugadores y bitácora */
+.players{display:grid;grid-template-columns:repeat(auto-fill,minmax(140px,1fr));gap:8px}
 .player{background:#0b1d30;border:1px solid #2c4e69;border-radius:13px;padding:9px;display:flex;align-items:center;gap:8px}
 .player.offline{opacity:.45}
 .player .face{font-size:26px}
 .player b{font-size:12px;display:block;word-break:break-word}
 .player small{color:var(--muted);font-size:11px}
-.mission{border:1px solid #42718c;background:linear-gradient(135deg,#173c59,#10243a);border-radius:18px;padding:18px}
-.mission h3{font-size:21px;margin:6px 0 9px}
-.answers{display:grid;gap:9px;margin-top:15px}
-.answer{background:#203f5b;color:white;text-align:left;box-shadow:none;border:1px solid #456783;padding:14px}
-.answer:hover:not(:disabled){border-color:var(--cyan);background:#2b5575}
-.answer.preview{cursor:default;opacity:.92}
-#notice{color:var(--gold);font-weight:800;min-height:24px;margin-top:12px;line-height:1.4}
-.log{display:grid;gap:6px;max-height:150px;overflow-y:auto}
+.log{display:grid;gap:6px;max-height:155px;overflow-y:auto}
 .log div{background:#0a1b2d;border:1px solid #24435f;border-radius:10px;padding:8px 11px;font-size:13px;color:#d6e9f8}
 .err{color:var(--pink);font-weight:700;margin-top:8px;min-height:20px;font-size:13px}
-footer{text-align:center;color:#7f9bb4;font-size:12px;padding:18px}
+footer{text-align:center;color:#7f9bb4;font-size:12px;padding:16px}
 @media(max-width:520px){
-  .wrap{padding:9px}.panel{padding:14px}.stats{gap:5px}.stat{padding:8px 3px}.stat b{font-size:19px}
-  .nodes{min-height:185px}.map{min-height:205px;padding:6px}.orb{width:42px;height:42px;font-size:21px}.node{font-size:10px}
+  .wrap{padding:8px}.panel{padding:13px}.stats{gap:5px}.stat{padding:8px 3px}.stat b{font-size:18px}
+  .orb{width:38px;height:38px;font-size:18px}.node{font-size:10px}.playfield{height:290px}
   .room-code{font-size:24px}
 }
 </style>
 </head>
 <body>
 <div class="top">
-  <div class="tag">MULTIJUGADOR EN VIVO · BIOQUÍMICA HUMANA</div>
+  <div class="tag">VIDEOJUEGO COOPERATIVO EN VIVO · BIOQUÍMICA HUMANA</div>
   <div class="logo">🧬 AVENTURA METABÓLICA</div>
-  <p class="sub">Una misión. Hasta 15 exploradores. Un organismo que necesita energía.</p>
+  <p class="sub">¡Salven la glucemia en equipo antes de que caiga en ayuno!</p>
 </div>
 
 <div class="wrap">
@@ -94,32 +249,37 @@ footer{text-align:center;color:#7f9bb4;font-size:12px;padding:18px}
       <button type="button" id="tabHost" onclick="switchTab('host')">🖥️ Crear sala (Docente)</button>
     </div>
 
-    <!-- UNIRSE COMO JUGADOR -->
+    <!-- UNIRSE COMO EXPLORADOR -->
     <div id="joinView" class="grid">
       <div>
-        <h2>🎮 Únete a la misión</h2>
-        <label class="mini" for="roomCodeInput">Código de la sala (4 caracteres)</label>
-        <input id="roomCodeInput" class="field code-input" maxlength="4" placeholder="A7K9">
+        <h2>🎮 Entra a la misión</h2>
+        <div id="qrJoinedBadge" class="qr-ready-badge hidden">
+          <span>✅ Sala <b id="qrRoomLabel">----</b> detectada por QR</span>
+          <button type="button" class="secondary" style="padding:5px 9px;font-size:11px" onclick="showManualCode()">Cambiar</button>
+        </div>
+        <div id="roomCodeWrap">
+          <label class="mini" for="roomCodeInput">Código de la sala</label>
+          <input id="roomCodeInput" class="field code-input" maxlength="4" placeholder="A7K9">
+        </div>
         <label class="mini" for="playerName">Tu nombre</label>
         <input id="playerName" class="field" maxlength="18" placeholder="Escribe tu nombre">
-        <label class="mini">Elige tu avatar</label>
+        <label class="mini">Elige tu personaje</label>
         <div class="gender">
           <button type="button" id="gBoy" class="selected" onclick="setGender('hombre')">♂ Hombre</button>
           <button type="button" id="gGirl" onclick="setGender('mujer')">♀ Mujer</button>
         </div>
         <div class="avatar-grid" id="avatarGrid"></div>
-        <button id="joinBtn" style="width:100%" onclick="joinRoom()">ENTRAR A LA AVENTURA 🚀</button>
+        <button id="joinBtn" style="width:100%" onclick="joinRoom()">ENTRAR AL JUEGO 🚀</button>
         <div id="joinError" class="err"></div>
       </div>
       <div>
-        <h2>🌌 Tu misión</h2>
-        <p>El organismo está en ayuno y necesita mantener la glucosa en sangre. Conéctate a la sala de tu docente, viaja por los órganos y activa las rutas metabólicas en equipo.</p>
-        <div class="stats">
-          <div class="stat"><b>15</b><span>JUGADORES</span></div>
-          <div class="stat"><b>5</b><span>ESTACIONES</span></div>
-          <div class="stat"><b>500</b><span>PTS EQUIPO</span></div>
-        </div>
-        <p class="mini" style="margin-top:14px">No necesitan crear cuenta ni estar en el mismo Wi-Fi. Basta con escribir el código de 4 letras que proyecta el docente.</p>
+        <h2>🌌 ¿Cómo se juega?</h2>
+        <p>El organismo está en ayuno y la <b>glucemia</b> baja segundo a segundo. Trabajen en equipo para superar <b>5 misiones interactivas</b> en los órganos:</p>
+        <p class="mini">💪 <b>1. Músculo:</b> Atrapa lactato y alanina en movimiento.</p>
+        <p class="mini">🟠 <b>2. Tejido adiposo:</b> Corta triglicéridos y extrae el glicerol.</p>
+        <p class="mini">🧬 <b>3. Hígado:</b> Opera el reactor de gluconeogénesis.</p>
+        <p class="mini">⚡ <b>4. Glucogenólisis:</b> Rompe cadenas de glucógeno en glucosa.</p>
+        <p class="mini">🩸 <b>5. Torrente sanguíneo:</b> Envía glucosa al cerebro y eritrocitos.</p>
       </div>
     </div>
 
@@ -128,93 +288,127 @@ footer{text-align:center;color:#7f9bb4;font-size:12px;padding:18px}
       <div class="grid">
         <div>
           <h2>🖥️ Proyectar sala en vivo</h2>
-          <p>Al crear la sala se generará un código corto y un enlace directo para compartir por WhatsApp o proyectar en el salón.</p>
-          <p class="mini">Mantén esta pestaña abierta durante la partida: tu computadora coordina la sala y los celulares se conectan a ella en tiempo real.</p>
-          <button id="createRoomBtn" style="width:100%;margin-top:10px" onclick="createRoom()">CREAR SALA EN VIVO 📡</button>
+          <p>Crea la sala para mostrar el <b>código QR</b> en el proyector. Hasta 15 exploradores se conectan escaneando con su celular y sus acciones alimentan el metabolismo en tiempo real.</p>
+          <button id="createRoomBtn" style="width:100%;margin-top:10px" onclick="createRoom()">CREAR SALA Y GENERAR QR 📡</button>
           <div id="hostCreateError" class="err"></div>
         </div>
         <div>
-          <h2>⚙️ Cómo se juega</h2>
-          <p class="mini">1. Crea la sala y muestra el código o comparte el enlace.</p>
-          <p class="mini">2. Espera a que aparezcan tus estudiantes en la lista (hasta 15).</p>
-          <p class="mini">3. Pulsa <b>INICIAR</b>. El primer explorador que acierte cada estación suma 100 pts para sí mismo y para el equipo.</p>
+          <h2>⚙️ Dinámica en clase</h2>
+          <p class="mini">1. Crea la sala y proyecta el QR (puedes agrandarlo en pantalla completa).</p>
+          <p class="mini">2. Los estudiantes escanean, ponen su nombre y aparecen al instante.</p>
+          <p class="mini">3. Pulsa <b>INICIAR MISIÓN</b>. Todos juegan al mismo tiempo en sus celulares para llenar la barra cooperativa de cada órgano.</p>
         </div>
       </div>
     </div>
   </section>
 
-  <!-- PANTALLA DE PARTIDA (HOST Y JUGADORES) -->
+  <!-- PANTALLA DE PARTIDA -->
   <section id="gamePanel" class="hidden">
-    <!-- BARRA DE CONTROL DEL DOCENTE -->
+    <!-- CONTROLES Y QR DEL DOCENTE -->
     <div class="panel hidden" id="hostControls">
-      <div class="row">
-        <div class="room-box">
+      <div class="host-bar">
+        <div class="qr-card">
+          <div class="qr-white" id="qrBox"></div>
           <div>
-            <div class="mini">CÓDIGO DE SALA</div>
+            <div class="mini">ESCANEA O USA EL CÓDIGO</div>
             <div class="room-code" id="displayCode">----</div>
+            <div style="display:flex;gap:6px;flex-wrap:wrap;margin-top:6px">
+              <button class="secondary" style="padding:7px 11px;font-size:12px" onclick="openQrModal()">🔍 Agrandar QR</button>
+              <button class="secondary" style="padding:7px 11px;font-size:12px" id="copyLinkBtn" onclick="copyInviteLink()">📋 Copiar link</button>
+            </div>
           </div>
-          <button class="secondary" id="copyLinkBtn" onclick="copyInviteLink()">📋 Copiar enlace</button>
         </div>
         <div style="display:flex;gap:8px;flex-wrap:wrap">
-          <button id="startBtn" onclick="hostStart()">INICIAR ▶</button>
+          <button id="startBtn" onclick="hostStart()">INICIAR MISIÓN ▶</button>
+          <button class="secondary hidden" id="skipBtn" onclick="hostSkipStage()">Siguiente estación ⏭</button>
           <button class="secondary" onclick="hostReset()">REINICIAR ↻</button>
         </div>
       </div>
       <div id="hostMsg" class="mini" style="margin-top:10px;color:var(--mint)"></div>
     </div>
 
-    <!-- PROGRESO Y MAPA -->
+    <!-- ESTADO GLOBAL: GLUCEMIA + MAPA -->
     <div class="panel">
       <div class="row">
         <div>
-          <span class="tag" id="connBadge">CONECTADO EN VIVO</span>
-          <h2 style="margin-top:8px" id="headerGreeting">Partida en vivo</h2>
+          <span class="tag" id="connBadge">EN VIVO</span>
+          <h2 style="margin-top:6px" id="headerGreeting">Partida en vivo</h2>
         </div>
-        <div class="tag" id="roomTag">SALA ----</div>
+        <div style="display:flex;gap:8px;align-items:center">
+          <button class="secondary" style="padding:7px 11px;font-size:12px" id="soundBtn" onclick="toggleSound()">🔊 Sonido</button>
+          <div class="tag" id="roomTag">SALA ----</div>
+        </div>
       </div>
+
+      <!-- MEDIDOR DE GLUCEMIA EN TIEMPO REAL -->
+      <div class="glucose-box">
+        <div class="glucose-head">
+          <span>🩸 GLUCEMIA EN SANGRE: <b id="glucoseVal" style="font-family:Orbitron;color:var(--mint)">85 mg/dL</b></span>
+          <span id="glucoseStatus" style="color:var(--mint)">Estado: Estable</span>
+        </div>
+        <div class="glucose-track">
+          <div class="glucose-fill" id="glucoseFill" style="width:72%"></div>
+        </div>
+      </div>
+
       <div class="stats">
-        <div class="stat"><b id="score">0</b><span>PUNTOS DEL EQUIPO</span></div>
-        <div class="stat"><b id="stage">0/5</b><span>ESTACIONES</span></div>
+        <div class="stat"><b id="score">0</b><span>PUNTOS EQUIPO</span></div>
+        <div class="stat"><b id="stageNum">0/5</b><span>ESTACIONES</span></div>
         <div class="stat"><b id="playerCount">0/15</b><span>EXPLORADORES</span></div>
       </div>
-      <div style="height:10px;background:#233b52;border-radius:99px;margin:13px 0;overflow:hidden">
-        <div id="progress" style="height:100%;width:0;background:linear-gradient(90deg,#56e0ec,#8ff0bd);transition:.4s"></div>
-      </div>
+
       <div class="map">
         <div class="route"></div>
         <div class="nodes" id="nodes"></div>
       </div>
     </div>
 
-    <!-- RETO Y LISTA DE JUGADORES -->
+    <!-- ZONA INTERACTIVA DE JUEGO + EXPLORADORES -->
     <div class="grid">
-      <div class="panel">
-        <h2>🧪 Reto de la estación</h2>
-        <div id="mission" class="mission">
-          <h3>⏳ Esperando inicio…</h3>
-          <p>Cuando el docente inicie la partida aparecerá el primer reto.</p>
+      <div class="panel" style="grid-column:span 1">
+        <div class="row">
+          <h2 style="margin:0">🎮 Misión activa</h2>
+          <span class="combo-pill hidden" id="comboPill">🔥 Racha x1</span>
         </div>
-        <div id="notice"></div>
+        <div class="goal-bar-wrap hidden" id="teamGoalWrap">
+          <div class="row mini">
+            <b id="teamGoalText" style="color:#fff">Meta del equipo: 0 / 10</b>
+            <span id="teamGoalPct">0%</span>
+          </div>
+          <div class="goal-track"><div class="goal-fill" id="teamGoalBar"></div></div>
+        </div>
+        <div id="playArea" class="arena-shell">
+          <h3>⏳ Esperando al docente…</h3>
+          <p class="mini">En cuanto inicie la partida aparecerá tu primer minijuego interactivo aquí.</p>
+        </div>
       </div>
+
       <div class="panel">
         <h2>🧑‍🚀 Exploradores conectados</h2>
         <div id="players" class="players"></div>
+        <h2 style="margin-top:18px">📡 Actividad en vivo</h2>
+        <div id="feed" class="log"></div>
       </div>
-    </div>
-
-    <!-- COMUNICADOR -->
-    <div class="panel">
-      <h2>📡 Comunicador del equipo</h2>
-      <div id="feed" class="log"></div>
     </div>
   </section>
 </div>
 
-<footer>AVENTURA METABÓLICA · Multijugador directo P2P · Hecho para GitHub Pages</footer>
+<!-- MODAL QR GIGANTE PARA PROYECTOR -->
+<div class="modal hidden" id="qrModal" onclick="if(event.target===this)closeQrModal()">
+  <div class="modal-card">
+    <span class="tag">ESCANEA PARA ENTRAR AL JUEGO</span>
+    <div class="modal-qr" id="qrModalBox"></div>
+    <div class="mini">Código de sala</div>
+    <div class="room-code" id="qrModalCode" style="font-size:40px;margin:4px 0 12px">----</div>
+    <button style="width:100%" onclick="closeQrModal()">Cerrar vista QR</button>
+  </div>
+</div>
+
+<footer>AVENTURA METABÓLICA · Juego Cooperativo WebRTC · GitHub Pages</footer>
 
 <script>
 const MAX_PLAYERS = 15;
-const PEER_PREFIX = 'aventura-metab-v1-';
+const PEER_PREFIX = 'aventura-metab-v2-';
 const ICE_CONFIG = {
   iceServers: [
     { urls: 'stun:stun.l.google.com:19302' },
@@ -223,61 +417,56 @@ const ICE_CONFIG = {
   ]
 };
 
-const MISSIONS = [
+const STATIONS = [
   {
     name: "Músculo",
     icon: "💪",
-    subtitle: "Recupera los precursores",
-    story: "El músculo está trabajando. Identifica qué moléculas puede enviar al hígado para apoyar la producción de glucosa.",
-    question: "¿Qué pareja de moléculas puede viajar desde el músculo al hígado para participar en la gluconeogénesis?",
-    answers: ["Lactato y alanina", "Glucógeno y colesterol", "Bilis y urea"],
-    correct: 0,
-    hint: "Piensa en los productos del metabolismo muscular anaerobio y de aminoácidos.",
-    explain: "¡Exacto! El lactato y la alanina llegan al hígado y sirven como precursores para formar glucosa."
+    gameTitle: "Caza de Precursores",
+    instruction: "Toca SOLO el Lactato y la Alanina que flotan en el músculo para enviarlos al hígado. ¡Evita colesterol, bilis, urea y glucógeno!",
+    hostCue: "Los exploradores están atrapando Lactato y Alanina en el músculo para enviarlos al hígado.",
+    unitLabel: "precursores enviados",
+    goalPerPlayer: 4,
+    explain: "¡Estación completada! El músculo envía lactato y alanina al hígado como precursores clave para fabricar glucosa."
   },
   {
     name: "Tejido adiposo",
     icon: "🟠",
-    subtitle: "Libera combustible",
-    story: "Las reservas de grasa se movilizan. Encuentra el producto de la lipólisis que puede utilizar el hígado para formar glucosa.",
-    question: "Durante la lipólisis, ¿qué molécula puede utilizarse en la gluconeogénesis?",
-    answers: ["Glicerol", "Glucógeno", "Almidón"],
-    correct: 0,
-    hint: "Es el esqueleto de 3 carbonos que queda al romper los triglicéridos.",
-    explain: "¡Bien! El glicerol liberado por el tejido adiposo puede convertirse en intermediarios para la gluconeogénesis."
+    gameTitle: "Laboratorio de Lipólisis",
+    instruction: "1) Corta los 3 enlaces del triglicérido con la lipasa. 2) Atrapa SOLO el Glicerol para mandarlo al hígado.",
+    hostCue: "Los exploradores están rompiendo triglicéridos (lipólisis) y extrayendo Glicerol para la gluconeogénesis.",
+    unitLabel: "gliceroles extraídos",
+    goalPerPlayer: 3,
+    explain: "¡Excelente lipólisis! Al degradar triglicéridos, el glicerol viaja al hígado para entrar en la gluconeogénesis."
   },
   {
     name: "Hígado",
     icon: "🧬",
-    subtitle: "Activa la gluconeogénesis",
-    story: "Los precursores llegaron al hígado. Ahora activa la ruta que permite fabricar glucosa cuando el aporte de carbohidratos es bajo.",
-    question: "¿Cómo se llama la vía que sintetiza glucosa a partir de precursores no glucídicos?",
-    answers: ["Gluconeogénesis", "Glucólisis", "Glucogénesis"],
-    correct: 0,
-    hint: "Su nombre significa literalmente 'formación de glucosa nueva'.",
-    explain: "¡Correcto! La gluconeogénesis sintetiza glucosa a partir de lactato, glicerol y algunos aminoácidos."
+    gameTitle: "Reactor de Gluconeogénesis",
+    instruction: "Enciende la ruta correcta (Gluconeogénesis), carga precursores no glucídicos, pulsa el reactor y sintetiza glucosa nueva.",
+    hostCue: "Los exploradores están operando el reactor hepático de Gluconeogénesis para sintetizar glucosa nueva.",
+    unitLabel: "moléculas de glucosa sintetizadas",
+    goalPerPlayer: 3,
+    explain: "¡Ruta dominada! La gluconeogénesis hepática sintetiza glucosa nueva a partir de lactato, glicerol y aminoácidos."
   },
   {
     name: "Glucogenólisis",
     icon: "⚡",
-    subtitle: "Abre la reserva de glucógeno",
-    story: "El organismo necesita una respuesta rápida. El hígado puede degradar su reserva de glucógeno.",
-    question: "¿Qué proceso degrada el glucógeno hepático para contribuir a mantener la glucemia?",
-    answers: ["Glucogenólisis", "Lipogénesis", "Glucogénesis"],
-    correct: 0,
-    hint: "El sufijo '-lisis' indica ruptura o degradación.",
-    explain: "¡Eso es! La glucogenólisis hepática libera glucosa que puede pasar a la sangre."
+    gameTitle: "Desbloqueo de Glucógeno",
+    instruction: "Activa el proceso correcto (Glucogenólisis) y rompe el extremo brillante de la cadena para liberar glucosa rápida.",
+    hostCue: "Los exploradores activaron la Glucogenólisis y están cortando la reserva de glucógeno hepático.",
+    unitLabel: "unidades de glucosa liberadas",
+    goalPerPlayer: 5,
+    explain: "¡Reserva liberada! La glucogenólisis degrada el glucógeno del hígado para responder rápido y sostener la glucemia."
   },
   {
-    name: "Sangre",
+    name: "Torrente sanguíneo",
     icon: "🩸",
-    subtitle: "Completa la misión",
-    story: "La glucosa está lista para salir del hígado. Última decisión: ¿cuál es el objetivo de este proceso?",
-    question: "¿Cuál es la función principal de liberar glucosa hepática a la sangre durante el ayuno?",
-    answers: ["Mantener la glucemia", "Producir hormonas tiroideas", "Almacenar calcio"],
-    correct: 0,
-    hint: "El cerebro y los glóbulos rojos dependen de niveles estables de glucosa circulante.",
-    explain: "¡Misión cumplida! El hígado contribuye a mantener la glucemia y abastecer tejidos dependientes de glucosa."
+    gameTitle: "Escolta de Glucosa",
+    instruction: "Envía glucosa SOLO a los tejidos que piden energía para mantener la glucemia (Cerebro y Eritrocitos). ¡Ignora las trampas!",
+    hostCue: "Recta final: los exploradores están enviando glucosa al cerebro y eritrocitos para estabilizar la glucemia.",
+    unitLabel: "entregas de glucosa",
+    goalPerPlayer: 5,
+    explain: "¡MISIÓN CUMPLIDA! El hígado mantuvo la glucemia estable para proteger al cerebro y a los glóbulos rojos durante el ayuno."
   }
 ];
 
@@ -286,25 +475,43 @@ const FACES = {
   mujer:  ['👩🏻‍🚀','👩🏻‍🔬','👩🏽‍🔬','👩🏽‍🚀','👩🏾‍🚀','👩🏼‍🔬','👩🏿‍🔬','👩🏿‍🚀']
 };
 
-let mode = 'idle'; // 'host' | 'client'
+// Estado global cliente/host
+let mode = 'idle';
 let gender = 'hombre', avatar = 0;
 let roomCode = '';
-let myPlayerId = localStorage.getItem('metab_p2p_id') || ('p_' + Math.random().toString(36).slice(2, 10));
-localStorage.setItem('metab_p2p_id', myPlayerId);
+let myPlayerId = localStorage.getItem('metab_game_id') || ('p_' + Math.random().toString(36).slice(2, 10));
+localStorage.setItem('metab_game_id', myPlayerId);
 
 let peer = null;
-let hostConn = null;        // conexión del cliente hacia el host
-let clientConns = {};       // conexiones en el host: { playerId: DataConnection }
-let answerLocked = false;
-let lastRenderedStage = -1;
+let hostConn = null;
+let clientConns = {};
 let currentState = null;
 
-// Estado autoritativo (solo vive en el Host)
+// Variables de sonido
+let soundOn = true;
+let audioCtx = null;
+
+// Variables del Host
 let game = null;
-let currentShuffled = []; // [{text, isCorrect}]
+let glucoseTimer = null;
+let broadcastThrottle = null;
+
+// Variables locales de minijuegos (Cliente)
+let activeMiniStage = -1;
+let miniCleanup = null;
+let streak = 0;
 
 function esc(s) {
   return String(s).replace(/[&<>"']/g, c => ({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
+}
+
+function shuffle(arr) {
+  const copy = arr.slice();
+  for (let i = copy.length - 1; i > 0; i--) {
+    const j = Math.floor(Math.random() * (i + 1));
+    [copy[i], copy[j]] = [copy[j], copy[i]];
+  }
+  return copy;
 }
 
 function genCode() {
@@ -314,6 +521,53 @@ function genCode() {
   return out;
 }
 
+// ==========================================
+// EFECTOS DE SONIDO (WEB AUDIO API)
+// ==========================================
+function beep(type) {
+  if (!soundOn) return;
+  try {
+    if (!audioCtx) audioCtx = new (window.AudioContext || window.webkitAudioContext)();
+    if (audioCtx.state === 'suspended') audioCtx.resume();
+    const osc = audioCtx.createOscillator();
+    const gain = audioCtx.createGain();
+    osc.connect(gain);
+    gain.connect(audioCtx.destination);
+    const now = audioCtx.currentTime;
+    if (type === 'ok') {
+      osc.type = 'triangle';
+      osc.frequency.setValueAtTime(520, now);
+      osc.frequency.exponentialRampToValueAtTime(860, now + 0.11);
+      gain.gain.setValueAtTime(0.12, now);
+      gain.gain.exponentialRampToValueAtTime(0.001, now + 0.13);
+      osc.start(now); osc.stop(now + 0.14);
+    } else if (type === 'bad') {
+      osc.type = 'sawtooth';
+      osc.frequency.setValueAtTime(210, now);
+      osc.frequency.linearRampToValueAtTime(135, now + 0.16);
+      gain.gain.setValueAtTime(0.09, now);
+      gain.gain.exponentialRampToValueAtTime(0.001, now + 0.18);
+      osc.start(now); osc.stop(now + 0.19);
+    } else if (type === 'win') {
+      osc.type = 'sine';
+      [523, 659, 784, 1046].forEach((freq, i) => {
+        osc.frequency.setValueAtTime(freq, now + i * 0.09);
+      });
+      gain.gain.setValueAtTime(0.13, now);
+      gain.gain.exponentialRampToValueAtTime(0.001, now + 0.45);
+      osc.start(now); osc.stop(now + 0.46);
+    }
+  } catch (e) {}
+}
+
+function toggleSound() {
+  soundOn = !soundOn;
+  document.getElementById('soundBtn').textContent = soundOn ? '🔊 Sonido' : '🔇 Mudo';
+}
+
+// ==========================================
+// UI DEL LOBBY (SIN NÚMEROS EN AVATARES)
+// ==========================================
 function switchTab(tab) {
   document.getElementById('tabJoin').classList.toggle('active', tab === 'join');
   document.getElementById('tabHost').classList.toggle('active', tab === 'host');
@@ -331,34 +585,91 @@ function setGender(g) {
 
 function drawAvatars() {
   document.getElementById('avatarGrid').innerHTML = FACES[gender]
-    .map((f, i) => `<button type="button" class="avatar ${i === avatar ? 'selected' : ''}" onclick="avatar=${i};drawAvatars()"><span class="face">${f}</span><small>${i + 1}</small></button>`)
+    .map((f, i) => `<button type="button" class="avatar ${i === avatar ? 'selected' : ''}" onclick="avatar=${i};drawAvatars()"><span class="face">${f}</span></button>`)
     .join('');
 }
 
+function showManualCode() {
+  document.getElementById('qrJoinedBadge').classList.add('hidden');
+  document.getElementById('roomCodeWrap').classList.remove('hidden');
+  document.getElementById('roomCodeInput').focus();
+}
+
 // ==========================================
-// LÓGICA DEL ANFITRIÓN (DOCENTE)
+// GENERACIÓN DE CÓDIGO QR
 // ==========================================
+function getInviteUrl() {
+  return `${location.origin}${location.pathname}?sala=${roomCode}`;
+}
+
+function renderQrInto(elId, size) {
+  const el = document.getElementById(elId);
+  el.innerHTML = '';
+  const url = getInviteUrl();
+  if (typeof QRCode !== 'undefined') {
+    new QRCode(el, {
+      text: url,
+      width: size,
+      height: size,
+      colorDark: '#071426',
+      colorLight: '#ffffff',
+      correctLevel: QRCode.CorrectLevel.M
+    });
+  } else {
+    const img = document.createElement('img');
+    img.src = `https://api.qrserver.com/v1/create-qr-code/?size=${size}x${size}&data=${encodeURIComponent(url)}`;
+    img.alt = 'QR de la sala';
+    el.appendChild(img);
+  }
+}
+
+function openQrModal() {
+  document.getElementById('qrModalCode').textContent = roomCode;
+  renderQrInto('qrModalBox', 240);
+  document.getElementById('qrModal').classList.remove('hidden');
+}
+
+function closeQrModal() {
+  document.getElementById('qrModal').classList.add('hidden');
+}
+
+function copyInviteLink() {
+  const url = getInviteUrl();
+  const btn = document.getElementById('copyLinkBtn');
+  const ok = () => {
+    btn.textContent = '✅ Copiado';
+    setTimeout(() => btn.textContent = '📋 Copiar link', 2000);
+  };
+  if (navigator.clipboard && navigator.clipboard.writeText) {
+    navigator.clipboard.writeText(url).then(ok).catch(() => prompt('Copia este enlace:', url));
+  } else {
+    prompt('Copia este enlace:', url);
+  }
+}
+
+// ==========================================
+// LÓGICA DEL ANFITRIÓN (DOCENTE / SERVIDOR P2P)
+// ==========================================
+function calcStageGoal(stageIdx) {
+  const activeCount = Math.max(1, Object.values(game.players).filter(p => p.online).length);
+  const per = STATIONS[stageIdx] ? STATIONS[stageIdx].goalPerPlayer : 4;
+  return Math.max(6, activeCount * per);
+}
+
 function initGameState() {
   game = {
     players: {},
     started: false,
     finished: false,
+    transitioning: false,
+    clearBanner: null,
     stage: 0,
+    stageProgress: 0,
+    stageGoal: 8,
     score: 0,
-    feed: ['¡Sala abierta! Comparte el código para que entren los exploradores.']
+    glucose: 85,
+    feed: ['📡 Sala abierta. Escaneen el QR para unirse a la misión.']
   };
-  prepareStageOptions();
-}
-
-function prepareStageOptions() {
-  if (game.stage >= MISSIONS.length) { currentShuffled = []; return; }
-  const m = MISSIONS[game.stage];
-  const arr = m.answers.map((text, idx) => ({ text, isCorrect: idx === m.correct }));
-  for (let i = arr.length - 1; i > 0; i--) {
-    const j = Math.floor(Math.random() * (i + 1));
-    [arr[i], arr[j]] = [arr[j], arr[i]];
-  }
-  currentShuffled = arr;
 }
 
 function pushFeed(text) {
@@ -368,42 +679,88 @@ function pushFeed(text) {
 
 function buildPublicState() {
   const playersArr = Object.values(game.players).sort((a, b) => b.points - a.points);
-  let mission = null;
-  if (game.started && !game.finished && game.stage < MISSIONS.length) {
-    const m = MISSIONS[game.stage];
-    mission = {
-      name: m.name,
-      subtitle: m.subtitle,
-      story: m.story,
-      question: m.question,
-      answers: currentShuffled.map(o => o.text)
-    };
-  }
   return {
     players: playersArr,
     started: game.started,
     finished: game.finished,
+    transitioning: game.transitioning,
+    clearBanner: game.clearBanner,
     stage: game.stage,
+    stageProgress: game.stageProgress,
+    stageGoal: game.stageGoal,
     score: game.score,
-    feed: game.feed,
-    mission
+    glucose: Math.round(game.glucose),
+    feed: game.feed
   };
 }
 
-function broadcastState() {
+function sendStateNow() {
+  if (broadcastThrottle) { clearTimeout(broadcastThrottle); broadcastThrottle = null; }
   const state = buildPublicState();
   currentState = state;
-  render(state);
+  renderShared(state);
   Object.values(clientConns).forEach(conn => {
     if (conn && conn.open) conn.send({ type: 'state', state });
   });
+}
+
+function scheduleBroadcast() {
+  if (broadcastThrottle) return;
+  broadcastThrottle = setTimeout(() => {
+    broadcastThrottle = null;
+    sendStateNow();
+  }, 110);
+}
+
+function startGlucoseLoop() {
+  stopGlucoseLoop();
+  glucoseTimer = setInterval(() => {
+    if (!game || !game.started || game.finished || game.transitioning) return;
+    game.glucose = Math.max(58, game.glucose - 0.65);
+    scheduleBroadcast();
+  }, 1000);
+}
+
+function stopGlucoseLoop() {
+  if (glucoseTimer) { clearInterval(glucoseTimer); glucoseTimer = null; }
+}
+
+function advanceStage() {
+  const finishedStation = STATIONS[game.stage];
+  game.transitioning = true;
+  game.glucose = Math.min(102, game.glucose + 10);
+  game.clearBanner = {
+    title: `✅ ¡${finishedStation.name} completado!`,
+    explain: finishedStation.explain
+  };
+  pushFeed(`🏆 ¡Estación ${game.stage + 1} (${finishedStation.name}) superada!`);
+  beep('win');
+  sendStateNow();
+
+  setTimeout(() => {
+    if (!game || !game.started) return;
+    game.transitioning = false;
+    game.clearBanner = null;
+    game.stage += 1;
+    if (game.stage >= STATIONS.length) {
+      game.finished = true;
+      game.glucose = Math.max(92, Math.round(game.glucose));
+      stopGlucoseLoop();
+      pushFeed('🎉 ¡MISIÓN CUMPLIDA! Glucemia estabilizada en equipo.');
+    } else {
+      game.stageProgress = 0;
+      game.stageGoal = calcStageGoal(game.stage);
+      pushFeed(`⚡ Estación ${game.stage + 1}: ${STATIONS[game.stage].gameTitle} activa.`);
+    }
+    sendStateNow();
+  }, 3800);
 }
 
 function createRoom(retries = 0) {
   const btn = document.getElementById('createRoomBtn');
   const errEl = document.getElementById('hostCreateError');
   btn.disabled = true;
-  btn.textContent = 'CONECTANDO SALA…';
+  btn.textContent = 'CREANDO SALA…';
   errEl.textContent = '';
 
   const candidate = genCode();
@@ -419,39 +776,36 @@ function createRoom(retries = 0) {
     document.getElementById('hostControls').classList.remove('hidden');
     document.getElementById('displayCode').textContent = roomCode;
     document.getElementById('roomTag').textContent = 'SALA ' + roomCode;
-    document.getElementById('headerGreeting').textContent = 'Panel de proyección (Docente)';
-    document.getElementById('hostMsg').textContent = 'Sala lista. Comparte el código ' + roomCode + ' o copia el enlace.';
-    broadcastState();
+    document.getElementById('headerGreeting').textContent = 'Centro de Control (Docente)';
+    document.getElementById('hostMsg').textContent = 'Proyecta el QR para que escaneen tus estudiantes.';
+    renderQrInto('qrBox', 100);
+    sendStateNow();
   });
 
   peer.on('connection', conn => {
-    let boundPlayerId = null;
+    let boundPid = null;
 
     conn.on('data', msg => {
       if (!msg || typeof msg !== 'object') return;
 
       if (msg.type === 'join') {
         const name = String(msg.name || '').trim().slice(0, 18);
-        const g = (msg.gender === 'mujer') ? 'mujer' : 'hombre';
+        const g = msg.gender === 'mujer' ? 'mujer' : 'hombre';
         const av = (Number.isInteger(msg.avatar) && msg.avatar >= 0 && msg.avatar <= 7) ? msg.avatar : 0;
         const pid = String(msg.playerId || ('p_' + Math.random().toString(36).slice(2, 9)));
 
         if (!name) {
-          conn.send({ type: 'join_error', message: 'Escribe tu nombre.' });
+          conn.send({ type: 'join_error', message: 'Escribe tu nombre para entrar.' });
           return;
         }
         const existing = game.players[pid];
         if (!existing) {
           if (Object.keys(game.players).length >= MAX_PLAYERS) {
-            conn.send({ type: 'join_error', message: 'La sala ya llegó a 15 jugadores.' });
-            return;
-          }
-          if (game.started) {
-            conn.send({ type: 'join_error', message: 'La partida ya comenzó. Espera a que el docente reinicie.' });
+            conn.send({ type: 'join_error', message: 'La sala ya llegó al máximo de 15 exploradores.' });
             return;
           }
           game.players[pid] = { id: pid, name, gender: g, avatar: av, points: 0, online: true };
-          pushFeed(`🚀 ${name} se unió a la misión.`);
+          pushFeed(`🚀 ${name} entró a la aventura.`);
         } else {
           existing.name = name;
           existing.gender = g;
@@ -459,55 +813,50 @@ function createRoom(retries = 0) {
           existing.online = true;
           pushFeed(`🔄 ${name} volvió a conectarse.`);
         }
-        boundPlayerId = pid;
+        boundPid = pid;
         clientConns[pid] = conn;
         conn.send({ type: 'joined', playerId: pid, name, gender: g, avatar: av });
-        broadcastState();
+        sendStateNow();
       }
 
-      if (msg.type === 'answer') {
-        if (!boundPlayerId || !game.players[boundPlayerId]) return;
-        if (!game.started || game.finished) return;
-        if (msg.stage !== game.stage) return; // evita doble respuesta al cambiar de estación
+      if (msg.type === 'action') {
+        if (!boundPid || !game.players[boundPid]) return;
+        if (!game.started || game.finished || game.transitioning) return;
+        if (msg.stage !== game.stage) return;
 
-        const opt = currentShuffled[msg.choice];
-        const m = MISSIONS[game.stage];
-        const player = game.players[boundPlayerId];
-        if (!opt) return;
-
-        if (opt.isCorrect) {
-          game.score += 100;
-          player.points += 100;
-          pushFeed(`✅ ${player.name} resolvió ${m.name}: ${m.explain}`);
-          game.stage += 1;
-          if (game.stage >= MISSIONS.length) {
-            game.finished = true;
-            pushFeed('🏆 ¡Misión completada! El organismo mantiene su glucemia.');
+        const player = game.players[boundPid];
+        if (msg.ok) {
+          const pts = Math.min(40, Math.max(5, Number(msg.points) || 15));
+          const delta = Math.min(2, Math.max(1, Number(msg.delta) || 1));
+          player.points += pts;
+          game.score += pts;
+          game.stageProgress = Math.min(game.stageGoal, game.stageProgress + delta);
+          game.glucose = Math.min(105, game.glucose + 1.8);
+          if (msg.logText) pushFeed(`✨ ${player.name}: ${msg.logText} (+${pts})`);
+          if (game.stageProgress >= game.stageGoal) {
+            advanceStage();
           } else {
-            prepareStageOptions();
-            pushFeed(`⚡ ¡Estación ${game.stage + 1} desbloqueada!`);
+            scheduleBroadcast();
           }
-          conn.send({ type: 'feedback', correct: true, message: '¡Correcto! +100 pts · ' + m.explain });
-          broadcastState();
         } else {
-          pushFeed(`💡 ${player.name} falló en ${m.name}. Pista: ${m.hint}`);
-          conn.send({ type: 'feedback', correct: false, message: 'No es esa respuesta. Pista: ' + m.hint });
-          broadcastState();
+          game.glucose = Math.max(58, game.glucose - 1.5);
+          if (msg.logText) pushFeed(`⚠️ ${player.name}: ${msg.logText}`);
+          scheduleBroadcast();
         }
       }
     });
 
     conn.on('close', () => {
-      if (boundPlayerId && game.players[boundPlayerId]) {
+      if (boundPid && game.players[boundPid]) {
         if (!game.started) {
-          const leftName = game.players[boundPlayerId].name;
-          delete game.players[boundPlayerId];
-          delete clientConns[boundPlayerId];
-          pushFeed(`👋 ${leftName} salió de la sala.`);
+          const left = game.players[boundPid].name;
+          delete game.players[boundPid];
+          delete clientConns[boundPid];
+          pushFeed(`👋 ${left} salió de la sala.`);
         } else {
-          game.players[boundPlayerId].online = false;
+          game.players[boundPid].online = false;
         }
-        broadcastState();
+        sendStateNow();
       }
     });
   });
@@ -518,30 +867,49 @@ function createRoom(retries = 0) {
       return;
     }
     btn.disabled = false;
-    btn.textContent = 'CREAR SALA EN VIVO 📡';
-    errEl.textContent = 'No se pudo abrir la sala (' + err.type + '). Revisa tu conexión e intenta de nuevo.';
+    btn.textContent = 'CREAR SALA Y GENERAR QR 📡';
+    errEl.textContent = 'No se pudo abrir la sala (' + err.type + '). Intenta de nuevo.';
   });
 }
 
 function hostStart() {
   if (mode !== 'host') return;
   if (Object.keys(game.players).length === 0) {
-    document.getElementById('hostMsg').textContent = 'Espera a que se conecte al menos un explorador.';
+    document.getElementById('hostMsg').textContent = 'Espera a que entre al menos 1 explorador (escaneando el QR).';
     return;
   }
   game.started = true;
   game.finished = false;
-  pushFeed('🚨 ¡La misión comenzó! Resuelvan el reto de la primera estación.');
-  document.getElementById('hostMsg').textContent = '¡Partida en curso!';
-  broadcastState();
+  game.transitioning = false;
+  game.stage = 0;
+  game.stageProgress = 0;
+  game.stageGoal = calcStageGoal(0);
+  game.glucose = 85;
+  pushFeed('🚨 ¡Misión iniciada! Estación 1: Caza de Precursores en el Músculo.');
+  document.getElementById('hostMsg').textContent = '¡Partida en vivo! Todos están jugando desde sus celulares.';
+  document.getElementById('skipBtn').classList.remove('hidden');
+  startGlucoseLoop();
+  sendStateNow();
+}
+
+function hostSkipStage() {
+  if (mode !== 'host' || !game.started || game.finished || game.transitioning) return;
+  game.stageProgress = game.stageGoal;
+  advanceStage();
 }
 
 function hostReset() {
   if (mode !== 'host') return;
+  stopGlucoseLoop();
   game.started = false;
   game.finished = false;
+  game.transitioning = false;
+  game.clearBanner = null;
   game.stage = 0;
+  game.stageProgress = 0;
+  game.stageGoal = 8;
   game.score = 0;
+  game.glucose = 85;
   Object.keys(game.players).forEach(pid => {
     if (!game.players[pid].online) {
       delete game.players[pid];
@@ -550,28 +918,14 @@ function hostReset() {
       game.players[pid].points = 0;
     }
   });
-  prepareStageOptions();
-  game.feed = ['🔄 Partida reiniciada. Los exploradores conectados siguen en la sala.'];
-  document.getElementById('hostMsg').textContent = 'Partida reiniciada. Pulsa INICIAR cuando estén listos.';
-  broadcastState();
-}
-
-function copyInviteLink() {
-  const url = `${location.origin}${location.pathname}?sala=${roomCode}`;
-  const btn = document.getElementById('copyLinkBtn');
-  const done = () => {
-    btn.textContent = '✅ Enlace copiado';
-    setTimeout(() => btn.textContent = '📋 Copiar enlace', 2000);
-  };
-  if (navigator.clipboard && navigator.clipboard.writeText) {
-    navigator.clipboard.writeText(url).then(done).catch(() => prompt('Copia este enlace:', url));
-  } else {
-    prompt('Copia este enlace:', url);
-  }
+  game.feed = ['🔄 Partida reiniciada. Los exploradores siguen dentro de la sala.'];
+  document.getElementById('skipBtn').classList.add('hidden');
+  document.getElementById('hostMsg').textContent = 'Sala lista para nueva partida. Pulsa INICIAR MISIÓN.';
+  sendStateNow();
 }
 
 // ==========================================
-// LÓGICA DEL EXPLORADOR (JUGADOR)
+// LÓGICA DEL EXPLORADOR (JUGADOR EN CELULAR)
 // ==========================================
 function joinRoom() {
   const code = document.getElementById('roomCodeInput').value.trim().toUpperCase();
@@ -579,12 +933,12 @@ function joinRoom() {
   const errEl = document.getElementById('joinError');
   const btn = document.getElementById('joinBtn');
 
-  if (code.length !== 4) { errEl.textContent = 'Escribe el código de 4 caracteres de la sala.'; return; }
+  if (code.length !== 4) { errEl.textContent = 'Escanea el QR o escribe el código de 4 caracteres.'; return; }
   if (!name) { errEl.textContent = 'Escribe tu nombre para entrar.'; return; }
 
   errEl.textContent = '';
   btn.disabled = true;
-  btn.textContent = 'CONECTANDO A LA SALA…';
+  btn.textContent = 'CONECTANDO…';
 
   if (peer) { try { peer.destroy(); } catch (e) {} }
   peer = new Peer({ config: ICE_CONFIG });
@@ -593,8 +947,8 @@ function joinRoom() {
   const timeout = setTimeout(() => {
     if (!connected) {
       btn.disabled = false;
-      btn.textContent = 'ENTRAR A LA AVENTURA 🚀';
-      errEl.textContent = 'No respondió la sala ' + code + '. Verifica el código o que el docente la tenga abierta.';
+      btn.textContent = 'ENTRAR AL JUEGO 🚀';
+      errEl.textContent = 'La sala ' + code + ' no respondió. Verifica que el docente la tenga abierta.';
       try { peer.destroy(); } catch (e) {}
     }
   }, 10000);
@@ -611,7 +965,7 @@ function joinRoom() {
       if (msg.type === 'join_error') {
         clearTimeout(timeout);
         btn.disabled = false;
-        btn.textContent = 'ENTRAR A LA AVENTURA 🚀';
+        btn.textContent = 'ENTRAR AL JUEGO 🚀';
         errEl.textContent = msg.message;
         hostConn.close();
       }
@@ -623,27 +977,22 @@ function joinRoom() {
         document.getElementById('lobbyPanel').classList.add('hidden');
         document.getElementById('gamePanel').classList.remove('hidden');
         document.getElementById('roomTag').textContent = 'SALA ' + roomCode;
-        document.getElementById('headerGreeting').innerHTML = `Hola, ${esc(msg.name)} ${FACES[msg.gender][msg.avatar]}`;
+        document.getElementById('headerGreeting').innerHTML = `${esc(msg.name)} ${FACES[msg.gender][msg.avatar]}`;
+        beep('ok');
       }
       if (msg.type === 'state') {
         currentState = msg.state;
-        render(msg.state);
-      }
-      if (msg.type === 'feedback') {
-        const notice = document.getElementById('notice');
-        notice.textContent = msg.message;
-        notice.style.color = msg.correct ? '#8ff0bd' : '#ffd166';
+        renderShared(msg.state);
       }
     });
 
     hostConn.on('close', () => {
       if (mode === 'client') {
+        cleanupMiniGame();
         const badge = document.getElementById('connBadge');
-        badge.textContent = 'DESCONECTADO DEL DOCENTE';
-        badge.style.color = '#ff82b2';
-        badge.style.borderColor = '#ff82b2';
-        document.getElementById('notice').textContent = 'Se perdió la conexión con la sala. Recarga la página para volver a entrar.';
-        document.getElementById('notice').style.color = '#ff82b2';
+        badge.textContent = 'DESCONECTADO';
+        badge.style.color = '#ff6b9d';
+        badge.style.borderColor = '#ff6b9d';
       }
     });
   });
@@ -651,99 +1000,635 @@ function joinRoom() {
   peer.on('error', err => {
     clearTimeout(timeout);
     btn.disabled = false;
-    btn.textContent = 'ENTRAR A LA AVENTURA 🚀';
-    if (err.type === 'peer-unavailable') {
-      errEl.textContent = 'No existe la sala ' + code + '. Revisa el código con tu docente.';
-    } else {
-      errEl.textContent = 'Error de conexión (' + err.type + '). Intenta de nuevo o usa datos móviles.';
-    }
+    btn.textContent = 'ENTRAR AL JUEGO 🚀';
+    errEl.textContent = err.type === 'peer-unavailable'
+      ? 'No existe la sala ' + code + '. Escanea el QR de nuevo.'
+      : 'Error de conexión (' + err.type + '). Intenta con datos móviles o recarga.';
   });
 }
 
-function chooseAnswer(choiceIdx) {
-  if (mode !== 'client' || answerLocked || !hostConn || !hostConn.open || !currentState) return;
-  answerLocked = true;
-  hostConn.send({ type: 'answer', choice: choiceIdx, stage: currentState.stage });
-  setTimeout(() => { answerLocked = false; }, 900);
+function sendAction(ok, points, delta, logText) {
+  if (mode !== 'client' || !hostConn || !hostConn.open || !currentState) return;
+  hostConn.send({
+    type: 'action',
+    stage: currentState.stage,
+    ok, points, delta, logText
+  });
+}
+
+function updateStreak(isOk) {
+  streak = isOk ? streak + 1 : 0;
+  const pill = document.getElementById('comboPill');
+  if (mode === 'client' && streak >= 2) {
+    pill.textContent = `🔥 Racha x${streak}`;
+    pill.classList.remove('hidden');
+  } else {
+    pill.classList.add('hidden');
+  }
+}
+
+function popMessage(container, text, ok) {
+  if (!container) return;
+  const el = document.createElement('div');
+  el.className = 'float-pop ' + (ok ? 'ok' : 'bad');
+  el.textContent = text;
+  container.appendChild(el);
+  if (!ok) {
+    container.classList.remove('shake');
+    void container.offsetWidth;
+    container.classList.add('shake');
+  }
+  setTimeout(() => el.remove(), 950);
 }
 
 // ==========================================
-// RENDERIZADO COMPARTIDO
+// MOTOR DE LOS 5 MINIJUEGOS INTERACTIVOS
 // ==========================================
-function render(s) {
-  document.getElementById('score').textContent = s.score;
-  document.getElementById('stage').textContent = `${s.stage}/${MISSIONS.length}`;
-  document.getElementById('playerCount').textContent = `${s.players.length}/${MAX_PLAYERS}`;
-  document.getElementById('progress').style.width = (s.stage / MISSIONS.length * 100) + '%';
+function cleanupMiniGame() {
+  if (typeof miniCleanup === 'function') {
+    try { miniCleanup(); } catch (e) {}
+  }
+  miniCleanup = null;
+  activeMiniStage = -1;
+}
 
-  if (mode === 'host') {
-    const startBtn = document.getElementById('startBtn');
-    startBtn.disabled = s.started && !s.finished;
+function mountClientMiniGame(stageIdx) {
+  cleanupMiniGame();
+  activeMiniStage = stageIdx;
+  const area = document.getElementById('playArea');
+  const st = STATIONS[stageIdx];
+  area.innerHTML = `
+    <div class="arena-title">
+      <span class="tag">ESTACIÓN ${stageIdx + 1} · ${esc(st.name)}</span>
+      <b style="color:var(--gold);font-size:15px">${esc(st.gameTitle)}</b>
+    </div>
+    <p class="mini" style="margin:0 0 6px;color:#dff3ff">${esc(st.instruction)}</p>
+    <div class="playfield" id="pf"></div>
+  `;
+  const pf = document.getElementById('pf');
+
+  if (stageIdx === 0) runMuscleGame(pf);
+  else if (stageIdx === 1) runAdiposeGame(pf);
+  else if (stageIdx === 2) runGluconeogenesisGame(pf);
+  else if (stageIdx === 3) runGlycogenolysisGame(pf);
+  else if (stageIdx === 4) runBloodstreamGame(pf);
+}
+
+// --- MINIJUEGO 1: MÚSCULO (CAZA DE MOLÉCULAS EN MOVIMIENTO) ---
+function runMuscleGame(pf) {
+  const pool = [
+    { name: 'Lactato', icon: '⚡', ok: true, tip: '¡Lactato enviado al hígado!' },
+    { name: 'Alanina', icon: '🧬', ok: true, tip: '¡Alanina enviada al hígado!' },
+    { name: 'Colesterol', icon: '🧈', ok: false, tip: 'El colesterol NO forma glucosa' },
+    { name: 'Bilis', icon: '🧪', ok: false, tip: 'La bilis no es precursor glucídico' },
+    { name: 'Urea', icon: '💧', ok: false, tip: 'La urea es un desecho nitrogenado' },
+    { name: 'Glucógeno', icon: '🧱', ok: false, tip: 'El glucógeno muscular no sale a la sangre' }
+  ];
+  let items = [];
+  let rafId = null;
+
+  function spawn() {
+    if (items.length >= 7) return;
+    const isGood = Math.random() < 0.56;
+    const candidates = pool.filter(p => p.ok === isGood);
+    const data = candidates[Math.floor(Math.random() * candidates.length)];
+    const btn = document.createElement('button');
+    btn.className = 'mol-btn';
+    btn.type = 'button';
+    btn.textContent = `${data.icon} ${data.name}`;
+    const w = pf.clientWidth || 300;
+    const h = pf.clientHeight || 280;
+    const obj = {
+      el: btn, data,
+      x: Math.random() * Math.max(40, w - 125),
+      y: h + 10,
+      vx: (Math.random() - 0.5) * 1.4,
+      vy: -(1.15 + Math.random() * 1.15)
+    };
+    btn.addEventListener('pointerdown', e => {
+      e.preventDefault();
+      if (!obj.alive) return;
+      obj.alive = false;
+      btn.remove();
+      items = items.filter(it => it !== obj);
+      if (data.ok) {
+        updateStreak(true);
+        beep('ok');
+        const bonus = Math.min(15, streak * 2);
+        popMessage(pf, `+${15 + bonus} · ${data.tip}`, true);
+        sendAction(true, 15 + bonus, 1, `envió ${data.name} al hígado`);
+      } else {
+        updateStreak(false);
+        beep('bad');
+        popMessage(pf, `❌ ${data.tip}`, false);
+        sendAction(false, 0, 0, `tocó ${data.name}`);
+      }
+    });
+    obj.alive = true;
+    pf.appendChild(btn);
+    items.push(obj);
   }
 
-  document.getElementById('nodes').innerHTML = MISSIONS.map((m, i) => `
-    <div class="node ${i < s.stage ? 'done' : i === s.stage ? 'active' : ''}">
-      <div class="orb">${i < s.stage ? '✓' : m.icon}</div>
-      ${esc(m.name)}
+  function tick() {
+    const w = pf.clientWidth || 300;
+    items.forEach(it => {
+      it.x += it.vx;
+      it.y += it.vy;
+      if (it.x < 6) { it.x = 6; it.vx *= -1; }
+      if (it.x > w - 120) { it.x = Math.max(6, w - 120); it.vx *= -1; }
+      it.el.style.transform = `translate3d(${it.x}px, ${it.y}px, 0)`;
+    });
+    items = items.filter(it => {
+      if (it.y < -55) { it.el.remove(); return false; }
+      return true;
+    });
+    rafId = requestAnimationFrame(tick);
+  }
+
+  spawn(); spawn(); spawn();
+  const spawner = setInterval(spawn, 680);
+  rafId = requestAnimationFrame(tick);
+
+  miniCleanup = () => {
+    clearInterval(spawner);
+    cancelAnimationFrame(rafId);
+  };
+}
+
+// --- MINIJUEGO 2: TEJIDO ADIPOSO (ROMPER TRIGLICÉRIDO Y EXTRAER GLICEROL) ---
+function runAdiposeGame(pf) {
+  let cuts = 0;
+
+  function renderCutPhase() {
+    pf.innerHTML = `
+      <div class="lab-stage">
+        <div class="mini" style="color:var(--gold);font-weight:900">FASE 1 · CORTA LOS 3 ENLACES DEL TRIGLICÉRIDO (${cuts}/3)</div>
+        <div class="trig-box">
+          <div class="glyc-core">🟠 GLICEROL</div>
+          <div class="fa-list">
+            <div class="fa-chain ${cuts >= 1 ? 'cut' : ''}">〰️ Ácido graso 1</div>
+            <div class="fa-chain ${cuts >= 2 ? 'cut' : ''}">〰️ Ácido graso 2</div>
+            <div class="fa-chain ${cuts >= 3 ? 'cut' : ''}">〰️ Ácido graso 3</div>
+          </div>
+        </div>
+        <button type="button" id="cutBtn" style="padding:14px 26px;font-size:16px">✂️ ACTIVAR LIPASA (${3 - cuts})</button>
+      </div>
+    `;
+    document.getElementById('cutBtn').addEventListener('pointerdown', e => {
+      e.preventDefault();
+      cuts++;
+      beep('ok');
+      if (cuts >= 3) {
+        renderPickPhase();
+      } else {
+        renderCutPhase();
+      }
+    });
+  }
+
+  function renderPickPhase() {
+    const opts = shuffle([
+      { label: '🟠 Glicerol', ok: true, tip: '¡Glicerol enviado al hígado!' },
+      { label: '〰️ Ácido graso', ok: false, tip: 'Los ácidos grasos dan energía, no glucosa directa' },
+      { label: '🧱 Glucógeno', ok: false, tip: 'El glucógeno no viene de la lipólisis' },
+      { label: '🥔 Almidón', ok: false, tip: 'El almidón es vegetal, no humano' }
+    ]);
+    pf.innerHTML = `
+      <div class="lab-stage">
+        <div class="mini" style="color:var(--mint);font-weight:900">FASE 2 · ¡TRIGLICÉRIDO ROTO! ENVÍA EL PRECURSOR AL HÍGADO</div>
+        <div class="choice-grid" id="lipGrid"></div>
+      </div>
+    `;
+    const grid = document.getElementById('lipGrid');
+    opts.forEach(o => {
+      const b = document.createElement('button');
+      b.type = 'button';
+      b.className = 'tile-btn';
+      b.textContent = o.label;
+      b.addEventListener('pointerdown', e => {
+        e.preventDefault();
+        if (o.ok) {
+          updateStreak(true);
+          beep('ok');
+          popMessage(pf, `+25 · ${o.tip}`, true);
+          sendAction(true, 25, 1, 'extrajo Glicerol por lipólisis');
+          cuts = 0;
+          setTimeout(() => { if (activeMiniStage === 1) renderCutPhase(); }, 350);
+        } else {
+          updateStreak(false);
+          beep('bad');
+          popMessage(pf, `❌ ${o.tip}`, false);
+          sendAction(false, 0, 0, 'eligió molécula incorrecta en lipólisis');
+        }
+      });
+      grid.appendChild(b);
+    });
+  }
+
+  renderCutPhase();
+  miniCleanup = () => {};
+}
+
+// --- MINIJUEGO 3: HÍGADO (REACTOR DE GLUCONEOGÉNESIS) ---
+function runGluconeogenesisGame(pf) {
+  let unlocked = false;
+  let step = 0; // 0: cargar precursor, 1: energizar reactor (3 toques), 2: liberar glucosa
+  let charge = 0;
+
+  function renderUnlock() {
+    const valves = shuffle([
+      { name: '🧬 Gluconeogénesis', ok: true },
+      { name: '📉 Glucólisis', ok: false, tip: 'La glucólisis destruye glucosa, no la fabrica' },
+      { name: '📦 Glucogénesis', ok: false, tip: 'La glucogénesis guarda glucógeno, no libera glucosa' }
+    ]);
+    pf.innerHTML = `
+      <div class="lab-stage">
+        <div class="mini" style="color:var(--gold);font-weight:900">🔒 ENCIENDE LA VÁLVULA DE SÍNTESIS DE GLUCOSA NUEVA</div>
+        <div class="valve-grid" id="vGrid"></div>
+      </div>
+    `;
+    const g = document.getElementById('vGrid');
+    valves.forEach(v => {
+      const b = document.createElement('button');
+      b.type = 'button';
+      b.className = 'tile-btn';
+      b.textContent = v.name;
+      b.addEventListener('pointerdown', e => {
+        e.preventDefault();
+        if (v.ok) {
+          unlocked = true;
+          beep('ok');
+          popMessage(pf, '✅ ¡Gluconeogénesis encendida!', true);
+          step = 0; charge = 0;
+          renderReactor();
+        } else {
+          beep('bad');
+          popMessage(pf, `❌ ${v.tip}`, false);
+          sendAction(false, 0, 0, 'encendió ruta equivocada en hígado');
+        }
+      });
+      g.appendChild(b);
+    });
+  }
+
+  function renderReactor() {
+    const pills = `
+      <div class="reactor-steps">
+        <span class="r-step ${step === 0 ? 'now' : 'ok'}">1. Precursor</span>
+        <span class="r-step ${step === 1 ? 'now' : step > 1 ? 'ok' : ''}">2. Reactor ATP</span>
+        <span class="r-step ${step === 2 ? 'now' : ''}">3. ¡Glucosa!</span>
+      </div>
+    `;
+
+    if (step === 0) {
+      const goodChoices = ['⚡ Lactato', '🟠 Glicerol', '🧬 Alanina'];
+      const pickedGood = goodChoices[Math.floor(Math.random() * goodChoices.length)];
+      const cards = shuffle([
+        { label: pickedGood, ok: true },
+        { label: '🧈 Colesterol', ok: false },
+        { label: '🧪 Bilis', ok: false },
+        { label: '💧 Urea', ok: false }
+      ]);
+      pf.innerHTML = `<div class="lab-stage">${pills}<div class="mini" style="color:#fff">Carga un precursor NO glucídico al reactor:</div><div class="choice-grid" id="pGrid"></div></div>`;
+      const pg = document.getElementById('pGrid');
+      cards.forEach(c => {
+        const b = document.createElement('button');
+        b.type = 'button';
+        b.className = 'tile-btn';
+        b.textContent = c.label;
+        b.addEventListener('pointerdown', e => {
+          e.preventDefault();
+          if (c.ok) {
+            beep('ok'); step = 1; charge = 0; renderReactor();
+          } else {
+            updateStreak(false); beep('bad');
+            popMessage(pf, '❌ Ese compuesto no entra a la gluconeogénesis', false);
+          }
+        });
+        pg.appendChild(b);
+      });
+    } else if (step === 1) {
+      pf.innerHTML = `
+        <div class="lab-stage">
+          ${pills}
+          <div class="mini" style="color:var(--gold)">¡Pulsa rápido el reactor para sintetizar (${charge}/3)!</div>
+          <button type="button" class="core-tap" id="coreBtn">⚡ SINTETIZAR<br>${charge}/3</button>
+        </div>
+      `;
+      document.getElementById('coreBtn').addEventListener('pointerdown', e => {
+        e.preventDefault();
+        charge++;
+        beep('ok');
+        if (charge >= 3) { step = 2; renderReactor(); }
+        else renderReactor();
+      });
+    } else {
+      pf.innerHTML = `
+        <div class="lab-stage">
+          ${pills}
+          <div class="mini" style="color:var(--mint);font-weight:900">¡GLUCOSA NUEVA LISTA!</div>
+          <button type="button" class="core-tap" id="relBtn" style="background:radial-gradient(circle,#ffd166,#ff9f43)">🍬 LIBERAR<br>GLUCOSA</button>
+        </div>
+      `;
+      document.getElementById('relBtn').addEventListener('pointerdown', e => {
+        e.preventDefault();
+        updateStreak(true);
+        beep('ok');
+        popMessage(pf, '+30 · ¡Glucosa fabricada por gluconeogénesis!', true);
+        sendAction(true, 30, 1, 'sintetizó glucosa por gluconeogénesis');
+        step = 0; charge = 0;
+        renderReactor();
+      });
+    }
+  }
+
+  renderUnlock();
+  miniCleanup = () => {};
+}
+
+// --- MINIJUEGO 4: HÍGADO (GLUCOGENÓLISIS: ROMPER CADENA DE GLUCÓGENO) ---
+function runGlycogenolysisGame(pf) {
+  let armed = false;
+  let remaining = 5;
+
+  function renderArm() {
+    const switches = shuffle([
+      { name: '⚡ Glucogenólisis', ok: true },
+      { name: '🧈 Lipogénesis', ok: false, tip: 'Lipogénesis fabrica grasa, no rompe glucógeno' },
+      { name: '📦 Glucogénesis', ok: false, tip: 'Glucogénesis construye glucógeno, no lo degrada' }
+    ]);
+    pf.innerHTML = `
+      <div class="lab-stage">
+        <div class="mini" style="color:var(--gold);font-weight:900">🔧 ACTIVA EL PROCESO PARA DEGRADAR EL GLUCÓGENO HEPÁTICO</div>
+        <div class="valve-grid" id="gSwitch"></div>
+      </div>
+    `;
+    const g = document.getElementById('gSwitch');
+    switches.forEach(s => {
+      const b = document.createElement('button');
+      b.type = 'button';
+      b.className = 'tile-btn';
+      b.textContent = s.name;
+      b.addEventListener('pointerdown', e => {
+        e.preventDefault();
+        if (s.ok) {
+          armed = true; remaining = 5;
+          beep('ok');
+          popMessage(pf, '✂️ ¡Glucogenólisis activa! Corta el extremo dorado', true);
+          renderChain();
+        } else {
+          beep('bad');
+          popMessage(pf, `❌ ${s.tip}`, false);
+          sendAction(false, 0, 0, 'eligió proceso incorrecto');
+        }
+      });
+      g.appendChild(b);
+    });
+  }
+
+  function renderChain() {
+    const nodesHtml = [0, 1, 2, 3, 4].map(i => {
+      const isDone = i >= remaining;
+      const isTarget = i === remaining - 1;
+      return `<button type="button" class="g-node ${isDone ? 'done' : isTarget ? 'target' : ''}" data-i="${i}">${isDone ? '✓' : 'G' + (i + 1)}</button>`;
+    }).join('');
+
+    pf.innerHTML = `
+      <div class="lab-stage">
+        <div class="mini" style="color:var(--mint);font-weight:900">✂️ TOCA EL EXTREMO DORADO PARA LIBERAR GLUCOSA</div>
+        <div class="chain-row" id="chainRow">${nodesHtml}</div>
+        <div class="mini">Unidades restantes en esta rama: <b>${remaining}</b></div>
+      </div>
+    `;
+    pf.querySelectorAll('.g-node').forEach(btn => {
+      btn.addEventListener('pointerdown', e => {
+        e.preventDefault();
+        const idx = Number(btn.dataset.i);
+        if (idx === remaining - 1) {
+          remaining--;
+          updateStreak(true);
+          beep('ok');
+          if (remaining === 0) {
+            popMessage(pf, '+25 · ¡Rama completa liberada a la sangre!', true);
+            sendAction(true, 25, 1, 'completó rama de glucogenólisis');
+            remaining = 5;
+          } else {
+            popMessage(pf, '+12 · ¡Glucosa liberada!', true);
+            sendAction(true, 12, 1, 'liberó glucosa del glucógeno');
+          }
+          renderChain();
+        } else if (idx < remaining - 1) {
+          updateStreak(false);
+          beep('bad');
+          popMessage(pf, '✂️ ¡Corta siempre desde el extremo dorado!', false);
+        }
+      });
+    });
+  }
+
+  renderArm();
+  miniCleanup = () => {};
+}
+
+// --- MINIJUEGO 5: TORRENTE SANGUÍNEO (ESCOLTA DE GLUCOSA PARA MANTENER GLUCEMIA) ---
+function runBloodstreamGame(pf) {
+  const organs = [
+    { id: 'brain', icon: '🧠', name: 'Cerebro', sub: 'Mantener glucemia', ok: true },
+    { id: 'rbc', icon: '🩸', name: 'Eritrocitos', sub: 'Dependen de glucosa', ok: true },
+    { id: 'thyroid', icon: '🦋', name: 'Tiroides', sub: 'Hormonas tiroideas', ok: false, tip: 'La glucosa hepática no es para hacer hormonas tiroideas' },
+    { id: 'bone', icon: '🦴', name: 'Hueso', sub: 'Almacenar calcio', ok: false, tip: 'El objetivo en ayuno es mantener la glucemia, no almacenar calcio' }
+  ];
+  let activeId = 'brain';
+  let shuffledOrgans = shuffle(organs);
+
+  function pickNextSignal() {
+    shuffledOrgans = shuffle(organs);
+    activeId = Math.random() < 0.5 ? 'brain' : 'rbc';
+    renderOrgans();
+  }
+
+  function renderOrgans() {
+    pf.innerHTML = `
+      <div class="lab-stage" style="padding:8px">
+        <div class="mini" style="color:var(--mint);font-weight:900">🍬 TOCA EL ÓRGANO QUE PIDE GLUCOSA PARA MANTENER LA GLUCEMIA</div>
+        <div class="organ-grid" id="orgGrid"></div>
+      </div>
+    `;
+    const grid = document.getElementById('orgGrid');
+    shuffledOrgans.forEach(o => {
+      const isUrgent = o.id === activeId;
+      const b = document.createElement('button');
+      b.type = 'button';
+      b.className = 'organ-card ' + (isUrgent ? 'urgent' : o.ok ? '' : 'trap');
+      b.innerHTML = `<span class="ico">${o.icon}</span><b>${o.name}</b><small>${isUrgent ? '⚡ ¡ENVÍA GLUCOSA!' : o.sub}</small>`;
+      b.addEventListener('pointerdown', e => {
+        e.preventDefault();
+        if (o.ok && isUrgent) {
+          updateStreak(true);
+          beep('ok');
+          popMessage(pf, `+20 · ¡Glucosa entregada a ${o.name}!`, true);
+          sendAction(true, 20, 1, `mantuvo la glucemia en ${o.name}`);
+          pickNextSignal();
+        } else if (o.ok) {
+          beep('ok');
+          popMessage(pf, `+10 · ¡Apoyo a ${o.name}!`, true);
+          sendAction(true, 10, 1, `abasteció a ${o.name}`);
+          pickNextSignal();
+        } else {
+          updateStreak(false);
+          beep('bad');
+          popMessage(pf, `❌ ${o.tip}`, false);
+          sendAction(false, 0, 0, `envió glucosa al destino equivocado`);
+        }
+      });
+      grid.appendChild(b);
+    });
+  }
+
+  pickNextSignal();
+  const rot = setInterval(pickNextSignal, 2800);
+  miniCleanup = () => clearInterval(rot);
+}
+
+// ==========================================
+// RENDERIZADO COMPARTIDO (HOST + EXPLORADORES)
+// ==========================================
+function renderShared(s) {
+  // Glucemia
+  const g = s.glucose;
+  const gVal = document.getElementById('glucoseVal');
+  const gFill = document.getElementById('glucoseFill');
+  const gStat = document.getElementById('glucoseStatus');
+  gVal.textContent = `${g} mg/dL`;
+  const pct = Math.max(8, Math.min(100, ((g - 50) / 60) * 100));
+  gFill.style.width = pct + '%';
+  if (g >= 80) {
+    gVal.style.color = '#8ff0bd'; gStat.style.color = '#8ff0bd'; gStat.textContent = 'Estado: Glucemia estable ✓';
+  } else if (g >= 68) {
+    gVal.style.color = '#ffd166'; gStat.style.color = '#ffd166'; gStat.textContent = 'Estado: Ayuno activo — ¡Sigan enviando!';
+  } else {
+    gVal.style.color = '#ff6b9d'; gStat.style.color = '#ff6b9d'; gStat.textContent = '⚠️ ¡Alerta de hipoglucemia!';
+  }
+
+  // Stats y mapa
+  document.getElementById('score').textContent = s.score;
+  document.getElementById('stageNum').textContent = `${Math.min(s.stage, STATIONS.length)}/${STATIONS.length}`;
+  document.getElementById('playerCount').textContent = `${s.players.length}/${MAX_PLAYERS}`;
+  document.getElementById('nodes').innerHTML = STATIONS.map((st, i) => `
+    <div class="node ${i < s.stage || s.finished ? 'done' : i === s.stage && s.started ? 'active' : ''}">
+      <div class="orb">${i < s.stage || s.finished ? '✓' : st.icon}</div>
+      ${esc(st.name)}
     </div>
   `).join('');
 
+  if (mode === 'host') {
+    document.getElementById('startBtn').disabled = s.started && !s.finished;
+  }
+
+  // Barra de meta de la estación
+  const goalWrap = document.getElementById('teamGoalWrap');
+  if (s.started && !s.finished && !s.transitioning && STATIONS[s.stage]) {
+    goalWrap.classList.remove('hidden');
+    const st = STATIONS[s.stage];
+    const gPct = Math.min(100, Math.round((s.stageProgress / Math.max(1, s.stageGoal)) * 100));
+    document.getElementById('teamGoalText').textContent = `Meta grupal: ${s.stageProgress} / ${s.stageGoal} ${st.unitLabel}`;
+    document.getElementById('teamGoalPct').textContent = gPct + '%';
+    document.getElementById('teamGoalBar').style.width = gPct + '%';
+  } else {
+    goalWrap.classList.add('hidden');
+  }
+
+  // Exploradores y bitácora
   document.getElementById('players').innerHTML = s.players.length
-    ? s.players.map(p => `
+    ? s.players.map((p, idx) => `
         <div class="player ${p.online ? '' : 'offline'}">
           <span class="face">${FACES[p.gender][p.avatar]}</span>
-          <div><b>${esc(p.name)}</b><small>${p.points} pts${p.online ? '' : ' · offline'}</small></div>
+          <div><b>${idx === 0 && p.points > 0 ? '👑 ' : ''}${esc(p.name)}</b><small>${p.points} pts${p.online ? '' : ' · offline'}</small></div>
         </div>
       `).join('')
-    : '<p class="mini">Aún no hay exploradores conectados.</p>';
+    : '<p class="mini">Escaneen el QR para aparecer aquí.</p>';
 
   document.getElementById('feed').innerHTML = s.feed.map(item => `<div>${esc(item)}</div>`).join('');
 
-  const mBox = document.getElementById('mission');
+  // Área principal de misión
+  const area = document.getElementById('playArea');
+
   if (s.finished) {
-    const top = s.players[0];
-    const mvp = top ? `<p>🥇 Destacado: <b>${esc(top.name)}</b> (${top.points} pts)</p>` : '';
-    mBox.innerHTML = `<h3>🏆 ¡MISIÓN CUMPLIDA!</h3><p>El equipo completó las 5 estaciones y ayudó a mantener la glucemia. ¡Son unos cracks de la bioquímica!</p>${mvp}`;
+    cleanupMiniGame();
+    document.getElementById('comboPill').classList.add('hidden');
+    const top3 = s.players.slice(0, 3);
+    const medals = ['🥇', '🥈', '🥉'];
+    area.innerHTML = `
+      <div class="banner-clear">
+        <span class="tag">MISIÓN CUMPLIDA</span>
+        <h3 style="font-size:24px;margin:10px 0">🏆 ¡GLUCEMIA ESTABILIZADA EN ${s.glucose} mg/dL!</h3>
+        <p>El equipo completó las 5 estaciones metabólicas con <b>${s.score} puntos</b>.</p>
+        <div class="podium">
+          ${top3.map((p, i) => `
+            <div class="podium-item">
+              <div style="font-size:30px">${medals[i]} ${FACES[p.gender][p.avatar]}</div>
+              <b>${esc(p.name)}</b>
+              <div class="mini" style="color:var(--gold)">${p.points} pts</div>
+            </div>
+          `).join('')}
+        </div>
+      </div>
+    `;
     return;
   }
+
   if (!s.started) {
-    mBox.innerHTML = `<h3>⏳ Esperando al docente…</h3><p>Exploradores conectados: <b>${s.players.length}</b>. La misión comenzará pronto.</p>`;
+    cleanupMiniGame();
+    document.getElementById('comboPill').classList.add('hidden');
+    area.innerHTML = mode === 'host'
+      ? `<h3>📡 Sala abierta (${s.players.length}/${MAX_PLAYERS} exploradores)</h3><p class="mini">Pide a tu grupo que escanee el código QR. Cuando estén listos pulsa <b>INICIAR MISIÓN</b>.</p>`
+      : `<h3>⏳ ¡Ya estás dentro!</h3><p class="mini">Esperando a que el docente inicie la misión. Prepárate para atrapar moléculas rápido.</p>`;
     return;
   }
-  const q = s.mission;
-  if (!q) return;
 
-  if (lastRenderedStage !== s.stage) {
-    lastRenderedStage = s.stage;
-    if (mode === 'client') document.getElementById('notice').textContent = '';
+  if (s.transitioning && s.clearBanner) {
+    cleanupMiniGame();
+    area.innerHTML = `
+      <div class="banner-clear">
+        <span class="tag">ESTACIÓN SUPERADA</span>
+        <h3 style="margin:10px 0">${esc(s.clearBanner.title)}</h3>
+        <p style="font-size:15px">${esc(s.clearBanner.explain)}</p>
+        <p class="mini" style="color:var(--gold)">Preparando siguiente órgano…</p>
+      </div>
+    `;
+    return;
   }
 
-  const answersHtml = q.answers.map((a, i) => {
-    const letter = String.fromCharCode(65 + i);
-    if (mode === 'host') {
-      return `<button class="answer preview" disabled>${letter}. ${esc(a)}</button>`;
+  // En juego activo
+  if (mode === 'host') {
+    const st = STATIONS[s.stage];
+    area.innerHTML = `
+      <span class="tag">ESTACIÓN ${s.stage + 1} · ${esc(st.name)}</span>
+      <h3 style="font-size:24px;margin:10px 0 6px">${st.icon} ${esc(st.gameTitle)}</h3>
+      <p style="font-size:16px">${esc(st.hostCue)}</p>
+      <div style="background:#08192b;border:1px solid #2b506e;border-radius:14px;padding:12px;margin-top:12px">
+        <div class="mini" style="color:var(--cyan);font-weight:900">OBJETIVO EN LOS CELULARES:</div>
+        <div style="margin-top:4px;font-size:14px">${esc(st.instruction)}</div>
+      </div>
+    `;
+  } else if (mode === 'client') {
+    if (activeMiniStage !== s.stage) {
+      mountClientMiniGame(s.stage);
     }
-    return `<button class="answer" onclick="chooseAnswer(${i})">${letter}. ${esc(a)}</button>`;
-  }).join('');
-
-  mBox.innerHTML = `
-    <span class="tag">ESTACIÓN ${s.stage + 1} · ${esc(q.name)}</span>
-    <h3>${esc(q.subtitle)}</h3>
-    <p>${esc(q.story)}</p>
-    <h3 style="font-size:18px;color:#fff">${esc(q.question)}</h3>
-    <div class="answers">${answersHtml}</div>
-    ${mode === 'host' ? '<p class="mini" style="margin-top:10px">Los exploradores responden desde sus celulares.</p>' : ''}
-  `;
+  }
 }
 
 // ==========================================
-// INICIALIZACIÓN
+// INICIALIZACIÓN Y DETECCIÓN DE QR (?sala=XXXX)
 // ==========================================
 drawAvatars();
 const params = new URLSearchParams(location.search);
 const presetRoom = (params.get('sala') || '').trim().toUpperCase().slice(0, 4);
-if (presetRoom) {
+if (presetRoom.length === 4) {
   document.getElementById('roomCodeInput').value = presetRoom;
+  document.getElementById('qrRoomLabel').textContent = presetRoom;
+  document.getElementById('qrJoinedBadge').classList.remove('hidden');
+  document.getElementById('roomCodeWrap').classList.add('hidden');
   switchTab('join');
 }
 </script>
