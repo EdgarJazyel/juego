@@ -3,118 +3,179 @@
 <head>
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1">
-<title>Aventura Metabólica</title>
+<title>Aventura Metabólica · Multijugador</title>
+<script src="https://unpkg.com/peerjs@1.5.4/dist/peerjs.min.js"></script>
 <style>
 @import url('https://fonts.googleapis.com/css2?family=Nunito:wght@400;700;900&family=Orbitron:wght@600;800&display=swap');
-:root{--night:#071426;--panel:#10243b;--cyan:#56e0ec;--mint:#8ff0bd;--gold:#ffd166;--white:#f3f8ff;--muted:#adc2d7}
+:root{--night:#071426;--panel:#10243b;--cyan:#56e0ec;--mint:#8ff0bd;--gold:#ffd166;--white:#f3f8ff;--muted:#adc2d7;--pink:#ff82b2}
 *{box-sizing:border-box}
 body{margin:0;min-height:100vh;background:radial-gradient(ellipse at 50% -15%,#25577a 0,#0a1c32 48%,#050d19 100%);color:var(--white);font-family:Nunito,system-ui,sans-serif}
 button,input{font:inherit}
 button{cursor:pointer;border:0;border-radius:14px;padding:12px 17px;font-weight:900;background:linear-gradient(135deg,var(--cyan),var(--mint));color:#052031;box-shadow:0 5px 0 #247d88;transition:.15s}
 button:active{transform:translateY(3px);box-shadow:0 2px 0 #247d88}
-button:disabled{opacity:.45;cursor:not-allowed}
-button.secondary{background:#284660;color:white;box-shadow:none;border:1px solid #456887}
-.wrap{max-width:1050px;margin:auto;padding:14px}
-.top{text-align:center;padding:22px 10px 14px}
+button:disabled{opacity:.45;cursor:not-allowed;transform:none}
+button.secondary{background:#284660;color:#fff;box-shadow:none;border:1px solid #456887}
+button.secondary:hover:not(:disabled){background:#345a7a}
+.wrap{max-width:1120px;margin:auto;padding:14px}
+.top{text-align:center;padding:20px 10px 12px}
 .logo{font-family:Orbitron,sans-serif;letter-spacing:2px;font-size:clamp(24px,5vw,46px);font-weight:800;text-shadow:0 0 22px #56e0ec66}
 .tag{display:inline-block;padding:6px 12px;border:1px solid #4e9ab0;border-radius:99px;color:var(--cyan);font-size:12px;font-weight:900;letter-spacing:1px}
 .sub{color:var(--muted);margin:8px 0}
 .panel{background:linear-gradient(145deg,#142c46ee,#0c1d31f2);border:1px solid #315879;border-radius:22px;padding:18px;box-shadow:0 16px 45px #0005;margin:12px 0}
 .panel h2{margin:0 0 10px;color:var(--cyan);font-size:21px}
-.grid{display:grid;grid-template-columns:repeat(auto-fit,minmax(260px,1fr));gap:14px}
-.field{width:100%;padding:13px;border-radius:12px;border:1px solid #41617d;background:#07182b;color:white;margin:7px 0 13px;outline:none}
+.grid{display:grid;grid-template-columns:repeat(auto-fit,minmax(270px,1fr));gap:14px}
+.tabs{display:flex;gap:10px;margin-bottom:16px}
+.tabs button{flex:1;background:#1a3652;color:#d6e9f8;box-shadow:none;border:1px solid #3c607e;padding:13px}
+.tabs button.active{background:linear-gradient(135deg,var(--cyan),var(--mint));color:#052031;border-color:transparent}
+.field{width:100%;padding:13px;border-radius:12px;border:1px solid #41617d;background:#07182b;color:white;margin:6px 0 13px;outline:none}
 .field:focus{border-color:var(--cyan)}
-.gender{display:flex;gap:10px}
+.code-input{font-family:Orbitron,sans-serif;letter-spacing:6px;text-transform:uppercase;text-align:center;font-size:22px;font-weight:800}
+.gender{display:flex;gap:10px;margin-top:6px}
 .gender button{flex:1;background:#24415d;color:#eaf7ff;box-shadow:none;border:1px solid #456887}
 .gender button.selected{background:#d9faff;color:#09243a;border:2px solid var(--cyan)}
 .avatar-grid{display:grid;grid-template-columns:repeat(4,1fr);gap:8px;margin:8px 0 15px}
 .avatar{padding:8px 3px;background:#203d58;color:white;border:2px solid transparent;box-shadow:none;border-radius:14px}
 .avatar.selected{border-color:var(--gold);background:#31536f}
-.avatar .face{display:block;font-size:34px}
+.avatar .face{display:block;font-size:32px}
 .avatar small{font-size:11px}
 .mini{color:var(--muted);font-size:13px}
 .hidden{display:none!important}
 .row{display:flex;gap:10px;align-items:center;justify-content:space-between;flex-wrap:wrap}
-.stats{display:grid;grid-template-columns:repeat(3,1fr);gap:9px}
+.stats{display:grid;grid-template-columns:repeat(3,1fr);gap:9px;margin-top:10px}
 .stat{background:#0a1b2d;border:1px solid #284966;border-radius:15px;padding:12px;text-align:center}
 .stat b{display:block;font-family:Orbitron;font-size:24px;color:var(--gold)}
 .stat span{font-size:11px;color:var(--muted)}
-.map{position:relative;overflow:hidden;min-height:240px;border-radius:18px;border:1px solid #3a6785;background:radial-gradient(circle at 50% 50%,#194c67,#0a2138 67%,#08182b);padding:15px}
+.room-box{background:#07192b;border:2px dashed var(--cyan);border-radius:16px;padding:12px 18px;display:flex;align-items:center;gap:14px;flex-wrap:wrap}
+.room-code{font-family:Orbitron,sans-serif;font-size:30px;font-weight:800;letter-spacing:5px;color:var(--gold)}
+.map{position:relative;overflow:hidden;min-height:245px;border-radius:18px;border:1px solid #3a6785;background:radial-gradient(circle at 50% 50%,#194c67,#0a2138 67%,#08182b);padding:15px}
 .map:before{content:"";position:absolute;inset:0;background-image:linear-gradient(#6eddeb0b 1px,transparent 1px),linear-gradient(90deg,#6eddeb0b 1px,transparent 1px);background-size:28px 28px}
 .route{position:absolute;left:8%;right:8%;top:50%;height:4px;background:linear-gradient(90deg,#56e0ec,#8ff0bd,#ffd166);box-shadow:0 0 14px #56e0ec;transform:rotate(-4deg)}
-.nodes{position:relative;display:flex;justify-content:space-around;align-items:center;min-height:210px;gap:4px}
+.nodes{position:relative;display:flex;justify-content:space-around;align-items:center;min-height:215px;gap:4px}
 .node{z-index:1;text-align:center;width:19%;font-size:12px;color:#d8f3ff}
 .orb{width:54px;height:54px;margin:0 auto 8px;border-radius:50%;display:grid;place-items:center;font-size:26px;background:#153c58;border:2px solid #64dce8;box-shadow:0 0 18px #56e0ec55;transition:.3s}
 .node.done .orb{background:#1d6c5b;border-color:var(--mint)}
 .node.active .orb{border:3px solid var(--gold);box-shadow:0 0 22px #ffd16699;transform:scale(1.12)}
+.players{display:grid;grid-template-columns:repeat(auto-fill,minmax(138px,1fr));gap:8px}
+.player{background:#0b1d30;border:1px solid #2c4e69;border-radius:13px;padding:9px;display:flex;align-items:center;gap:8px}
+.player.offline{opacity:.45}
+.player .face{font-size:26px}
+.player b{font-size:12px;display:block;word-break:break-word}
+.player small{color:var(--muted);font-size:11px}
 .mission{border:1px solid #42718c;background:linear-gradient(135deg,#173c59,#10243a);border-radius:18px;padding:18px}
 .mission h3{font-size:21px;margin:6px 0 9px}
 .answers{display:grid;gap:9px;margin-top:15px}
 .answer{background:#203f5b;color:white;text-align:left;box-shadow:none;border:1px solid #456783;padding:14px}
-.answer:hover{border-color:var(--cyan);background:#2b5575}
-.answer.ok{background:#19594b;border-color:var(--mint)}
-.answer.bad{background:#5c2233;border-color:#ff82b2}
-#notice{margin-top:14px;font-weight:800;min-height:24px;line-height:1.4}
+.answer:hover:not(:disabled){border-color:var(--cyan);background:#2b5575}
+.answer.preview{cursor:default;opacity:.92}
+#notice{color:var(--gold);font-weight:800;min-height:24px;margin-top:12px;line-height:1.4}
 .log{display:grid;gap:6px;max-height:150px;overflow-y:auto}
 .log div{background:#0a1b2d;border:1px solid #24435f;border-radius:10px;padding:8px 11px;font-size:13px;color:#d6e9f8}
+.err{color:var(--pink);font-weight:700;margin-top:8px;min-height:20px;font-size:13px}
 footer{text-align:center;color:#7f9bb4;font-size:12px;padding:18px}
 @media(max-width:520px){
   .wrap{padding:9px}.panel{padding:14px}.stats{gap:5px}.stat{padding:8px 3px}.stat b{font-size:19px}
   .nodes{min-height:185px}.map{min-height:205px;padding:6px}.orb{width:42px;height:42px;font-size:21px}.node{font-size:10px}
+  .room-code{font-size:24px}
 }
 </style>
 </head>
 <body>
 <div class="top">
-  <div class="tag">VIDEOJUEGO INTERACTIVO · BIOQUÍMICA HUMANA</div>
+  <div class="tag">MULTIJUGADOR EN VIVO · BIOQUÍMICA HUMANA</div>
   <div class="logo">🧬 AVENTURA METABÓLICA</div>
-  <p class="sub">Una misión. Cinco estaciones. Un organismo que necesita energía.</p>
+  <p class="sub">Una misión. Hasta 15 exploradores. Un organismo que necesita energía.</p>
 </div>
 
 <div class="wrap">
-  <!-- PANTALLA DE INICIO -->
-  <section class="panel" id="joinPanel">
-    <div class="grid">
+  <!-- LOBBY INICIAL -->
+  <section class="panel" id="lobbyPanel">
+    <div class="tabs">
+      <button type="button" id="tabJoin" class="active" onclick="switchTab('join')">🧑‍🚀 Soy explorador</button>
+      <button type="button" id="tabHost" onclick="switchTab('host')">🖥️ Crear sala (Docente)</button>
+    </div>
+
+    <!-- UNIRSE COMO JUGADOR -->
+    <div id="joinView" class="grid">
       <div>
-        <h2>🎮 Crea tu explorador</h2>
-        <label class="mini" for="playerName">Nombre o equipo</label>
-        <input id="playerName" class="field" maxlength="20" placeholder="Escribe tu nombre">
+        <h2>🎮 Únete a la misión</h2>
+        <label class="mini" for="roomCodeInput">Código de la sala (4 caracteres)</label>
+        <input id="roomCodeInput" class="field code-input" maxlength="4" placeholder="A7K9">
+        <label class="mini" for="playerName">Tu nombre</label>
+        <input id="playerName" class="field" maxlength="18" placeholder="Escribe tu nombre">
         <label class="mini">Elige tu avatar</label>
         <div class="gender">
           <button type="button" id="gBoy" class="selected" onclick="setGender('hombre')">♂ Hombre</button>
           <button type="button" id="gGirl" onclick="setGender('mujer')">♀ Mujer</button>
         </div>
         <div class="avatar-grid" id="avatarGrid"></div>
-        <button style="width:100%" onclick="startGame()">ENTRAR A LA AVENTURA 🚀</button>
-        <div id="joinError" class="mini" style="color:#ffd166;margin-top:8px"></div>
+        <button id="joinBtn" style="width:100%" onclick="joinRoom()">ENTRAR A LA AVENTURA 🚀</button>
+        <div id="joinError" class="err"></div>
       </div>
       <div>
         <h2>🌌 Tu misión</h2>
-        <p>El organismo está en ayuno y necesita mantener la glucosa en sangre. Viaja por los órganos, resuelve cada reto y activa las rutas metabólicas.</p>
+        <p>El organismo está en ayuno y necesita mantener la glucosa en sangre. Conéctate a la sala de tu docente, viaja por los órganos y activa las rutas metabólicas en equipo.</p>
         <div class="stats">
+          <div class="stat"><b>15</b><span>JUGADORES</span></div>
           <div class="stat"><b>5</b><span>ESTACIONES</span></div>
-          <div class="stat"><b>500</b><span>PTS MÁX</span></div>
-          <div class="stat"><b>100%</b><span>WEB</span></div>
+          <div class="stat"><b>500</b><span>PTS EQUIPO</span></div>
         </div>
-        <p class="mini" style="margin-top:14px">Si aciertas al primer intento ganas 100 pts completos. Si fallas, recibes una pista y puedes volver a intentar.</p>
+        <p class="mini" style="margin-top:14px">No necesitan crear cuenta ni estar en el mismo Wi-Fi. Basta con escribir el código de 4 letras que proyecta el docente.</p>
+      </div>
+    </div>
+
+    <!-- CREAR SALA COMO DOCENTE -->
+    <div id="hostView" class="hidden">
+      <div class="grid">
+        <div>
+          <h2>🖥️ Proyectar sala en vivo</h2>
+          <p>Al crear la sala se generará un código corto y un enlace directo para compartir por WhatsApp o proyectar en el salón.</p>
+          <p class="mini">Mantén esta pestaña abierta durante la partida: tu computadora coordina la sala y los celulares se conectan a ella en tiempo real.</p>
+          <button id="createRoomBtn" style="width:100%;margin-top:10px" onclick="createRoom()">CREAR SALA EN VIVO 📡</button>
+          <div id="hostCreateError" class="err"></div>
+        </div>
+        <div>
+          <h2>⚙️ Cómo se juega</h2>
+          <p class="mini">1. Crea la sala y muestra el código o comparte el enlace.</p>
+          <p class="mini">2. Espera a que aparezcan tus estudiantes en la lista (hasta 15).</p>
+          <p class="mini">3. Pulsa <b>INICIAR</b>. El primer explorador que acierte cada estación suma 100 pts para sí mismo y para el equipo.</p>
+        </div>
       </div>
     </div>
   </section>
 
-  <!-- PANTALLA DEL JUEGO -->
+  <!-- PANTALLA DE PARTIDA (HOST Y JUGADORES) -->
   <section id="gamePanel" class="hidden">
+    <!-- BARRA DE CONTROL DEL DOCENTE -->
+    <div class="panel hidden" id="hostControls">
+      <div class="row">
+        <div class="room-box">
+          <div>
+            <div class="mini">CÓDIGO DE SALA</div>
+            <div class="room-code" id="displayCode">----</div>
+          </div>
+          <button class="secondary" id="copyLinkBtn" onclick="copyInviteLink()">📋 Copiar enlace</button>
+        </div>
+        <div style="display:flex;gap:8px;flex-wrap:wrap">
+          <button id="startBtn" onclick="hostStart()">INICIAR ▶</button>
+          <button class="secondary" onclick="hostReset()">REINICIAR ↻</button>
+        </div>
+      </div>
+      <div id="hostMsg" class="mini" style="margin-top:10px;color:var(--mint)"></div>
+    </div>
+
+    <!-- PROGRESO Y MAPA -->
     <div class="panel">
       <div class="row">
         <div>
-          <span class="tag">MISIÓN EN CURSO</span>
-          <h2 style="margin-top:8px">Explorador: <span id="myName"></span> <span id="myAvatar"></span></h2>
+          <span class="tag" id="connBadge">CONECTADO EN VIVO</span>
+          <h2 style="margin-top:8px" id="headerGreeting">Partida en vivo</h2>
         </div>
-        <button class="secondary" onclick="resetGame()">Reiniciar ↻</button>
+        <div class="tag" id="roomTag">SALA ----</div>
       </div>
       <div class="stats">
-        <div class="stat"><b id="score">0</b><span>PUNTOS</span></div>
+        <div class="stat"><b id="score">0</b><span>PUNTOS DEL EQUIPO</span></div>
         <div class="stat"><b id="stage">0/5</b><span>ESTACIONES</span></div>
-        <div class="stat"><b id="mistakes">0</b><span>ERRORES</span></div>
+        <div class="stat"><b id="playerCount">0/15</b><span>EXPLORADORES</span></div>
       </div>
       <div style="height:10px;background:#233b52;border-radius:99px;margin:13px 0;overflow:hidden">
         <div id="progress" style="height:100%;width:0;background:linear-gradient(90deg,#56e0ec,#8ff0bd);transition:.4s"></div>
@@ -125,22 +186,43 @@ footer{text-align:center;color:#7f9bb4;font-size:12px;padding:18px}
       </div>
     </div>
 
-    <div class="panel">
-      <h2>🧪 Reto de la estación</h2>
-      <div id="mission" class="mission"></div>
-      <div id="notice"></div>
+    <!-- RETO Y LISTA DE JUGADORES -->
+    <div class="grid">
+      <div class="panel">
+        <h2>🧪 Reto de la estación</h2>
+        <div id="mission" class="mission">
+          <h3>⏳ Esperando inicio…</h3>
+          <p>Cuando el docente inicie la partida aparecerá el primer reto.</p>
+        </div>
+        <div id="notice"></div>
+      </div>
+      <div class="panel">
+        <h2>🧑‍🚀 Exploradores conectados</h2>
+        <div id="players" class="players"></div>
+      </div>
     </div>
 
+    <!-- COMUNICADOR -->
     <div class="panel">
-      <h2>📡 Bitácora de la misión</h2>
+      <h2>📡 Comunicador del equipo</h2>
       <div id="feed" class="log"></div>
     </div>
   </section>
 </div>
 
-<footer>AVENTURA METABÓLICA · Juego educativo de bioquímica</footer>
+<footer>AVENTURA METABÓLICA · Multijugador directo P2P · Hecho para GitHub Pages</footer>
 
 <script>
+const MAX_PLAYERS = 15;
+const PEER_PREFIX = 'aventura-metab-v1-';
+const ICE_CONFIG = {
+  iceServers: [
+    { urls: 'stun:stun.l.google.com:19302' },
+    { urls: 'stun:stun1.l.google.com:19302' },
+    { urls: 'stun:stun2.l.google.com:19302' }
+  ]
+};
+
 const MISSIONS = [
   {
     name: "Músculo",
@@ -151,7 +233,7 @@ const MISSIONS = [
     answers: ["Lactato y alanina", "Glucógeno y colesterol", "Bilis y urea"],
     correct: 0,
     hint: "Piensa en los productos del metabolismo muscular anaerobio y de aminoácidos.",
-    explain: "¡Exacto! El lactato y la alanina viajan al hígado y sirven como precursores para formar glucosa."
+    explain: "¡Exacto! El lactato y la alanina llegan al hígado y sirven como precursores para formar glucosa."
   },
   {
     name: "Tejido adiposo",
@@ -161,8 +243,8 @@ const MISSIONS = [
     question: "Durante la lipólisis, ¿qué molécula puede utilizarse en la gluconeogénesis?",
     answers: ["Glicerol", "Glucógeno", "Almidón"],
     correct: 0,
-    hint: "Es el esqueleto de 3 carbonos que se libera al romper los triglicéridos.",
-    explain: "¡Bien! El glicerol liberado por el tejido adiposo entra como intermediario para la gluconeogénesis."
+    hint: "Es el esqueleto de 3 carbonos que queda al romper los triglicéridos.",
+    explain: "¡Bien! El glicerol liberado por el tejido adiposo puede convertirse en intermediarios para la gluconeogénesis."
   },
   {
     name: "Hígado",
@@ -172,8 +254,8 @@ const MISSIONS = [
     question: "¿Cómo se llama la vía que sintetiza glucosa a partir de precursores no glucídicos?",
     answers: ["Gluconeogénesis", "Glucólisis", "Glucogénesis"],
     correct: 0,
-    hint: "Su nombre literalmente significa 'formación de glucosa nueva'.",
-    explain: "¡Correcto! La gluconeogénesis sintetiza glucosa a partir de lactato, glicerol y aminoácidos glucogénicos."
+    hint: "Su nombre significa literalmente 'formación de glucosa nueva'.",
+    explain: "¡Correcto! La gluconeogénesis sintetiza glucosa a partir de lactato, glicerol y algunos aminoácidos."
   },
   {
     name: "Glucogenólisis",
@@ -184,18 +266,18 @@ const MISSIONS = [
     answers: ["Glucogenólisis", "Lipogénesis", "Glucogénesis"],
     correct: 0,
     hint: "El sufijo '-lisis' indica ruptura o degradación.",
-    explain: "¡Eso es! La glucogenólisis hepática degrada el glucógeno y libera glucosa hacia la sangre."
+    explain: "¡Eso es! La glucogenólisis hepática libera glucosa que puede pasar a la sangre."
   },
   {
     name: "Sangre",
     icon: "🩸",
     subtitle: "Completa la misión",
-    story: "La glucosa está lista para salir del hígado. Última decisión: ¿cuál es el objetivo principal de este proceso?",
+    story: "La glucosa está lista para salir del hígado. Última decisión: ¿cuál es el objetivo de este proceso?",
     question: "¿Cuál es la función principal de liberar glucosa hepática a la sangre durante el ayuno?",
     answers: ["Mantener la glucemia", "Producir hormonas tiroideas", "Almacenar calcio"],
     correct: 0,
-    hint: "El cerebro y los eritrocitos dependen de niveles estables de glucosa en sangre.",
-    explain: "¡Misión cumplida! El hígado mantiene la glucemia para abastecer a los tejidos dependientes de glucosa."
+    hint: "El cerebro y los glóbulos rojos dependen de niveles estables de glucosa circulante.",
+    explain: "¡Misión cumplida! El hígado contribuye a mantener la glucemia y abastecer tejidos dependientes de glucosa."
   }
 ];
 
@@ -204,12 +286,39 @@ const FACES = {
   mujer:  ['👩🏻‍🚀','👩🏻‍🔬','👩🏽‍🔬','👩🏽‍🚀','👩🏾‍🚀','👩🏼‍🔬','👩🏿‍🔬','👩🏿‍🚀']
 };
 
-let gender = 'hombre', avatar = 0, playerName = '';
-let stage = 0, score = 0, mistakes = 0, stageMistakes = 0;
-let locked = false, currentOptions = [], feed = [];
+let mode = 'idle'; // 'host' | 'client'
+let gender = 'hombre', avatar = 0;
+let roomCode = '';
+let myPlayerId = localStorage.getItem('metab_p2p_id') || ('p_' + Math.random().toString(36).slice(2, 10));
+localStorage.setItem('metab_p2p_id', myPlayerId);
+
+let peer = null;
+let hostConn = null;        // conexión del cliente hacia el host
+let clientConns = {};       // conexiones en el host: { playerId: DataConnection }
+let answerLocked = false;
+let lastRenderedStage = -1;
+let currentState = null;
+
+// Estado autoritativo (solo vive en el Host)
+let game = null;
+let currentShuffled = []; // [{text, isCorrect}]
 
 function esc(s) {
   return String(s).replace(/[&<>"']/g, c => ({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
+}
+
+function genCode() {
+  const chars = 'ABCDEFGHJKLMNPQRSTUVWXYZ23456789';
+  let out = '';
+  for (let i = 0; i < 4; i++) out += chars[Math.floor(Math.random() * chars.length)];
+  return out;
+}
+
+function switchTab(tab) {
+  document.getElementById('tabJoin').classList.toggle('active', tab === 'join');
+  document.getElementById('tabHost').classList.toggle('active', tab === 'host');
+  document.getElementById('joinView').classList.toggle('hidden', tab !== 'join');
+  document.getElementById('hostView').classList.toggle('hidden', tab !== 'host');
 }
 
 function setGender(g) {
@@ -226,130 +335,417 @@ function drawAvatars() {
     .join('');
 }
 
-function shuffleOptions(mission) {
-  const arr = mission.answers.map((text, idx) => ({ text, isCorrect: idx === mission.correct }));
+// ==========================================
+// LÓGICA DEL ANFITRIÓN (DOCENTE)
+// ==========================================
+function initGameState() {
+  game = {
+    players: {},
+    started: false,
+    finished: false,
+    stage: 0,
+    score: 0,
+    feed: ['¡Sala abierta! Comparte el código para que entren los exploradores.']
+  };
+  prepareStageOptions();
+}
+
+function prepareStageOptions() {
+  if (game.stage >= MISSIONS.length) { currentShuffled = []; return; }
+  const m = MISSIONS[game.stage];
+  const arr = m.answers.map((text, idx) => ({ text, isCorrect: idx === m.correct }));
   for (let i = arr.length - 1; i > 0; i--) {
     const j = Math.floor(Math.random() * (i + 1));
     [arr[i], arr[j]] = [arr[j], arr[i]];
   }
-  return arr;
+  currentShuffled = arr;
 }
 
-function pushLog(msg) {
-  feed.unshift(msg);
-  feed = feed.slice(0, 6);
-  document.getElementById('feed').innerHTML = feed.map(m => `<div>${esc(m)}</div>`).join('');
+function pushFeed(text) {
+  game.feed.unshift(text);
+  game.feed = game.feed.slice(0, 8);
 }
 
-function startGame() {
-  const input = document.getElementById('playerName').value.trim();
-  if (!input) {
-    document.getElementById('joinError').textContent = 'Escribe tu nombre o el de tu equipo.';
+function buildPublicState() {
+  const playersArr = Object.values(game.players).sort((a, b) => b.points - a.points);
+  let mission = null;
+  if (game.started && !game.finished && game.stage < MISSIONS.length) {
+    const m = MISSIONS[game.stage];
+    mission = {
+      name: m.name,
+      subtitle: m.subtitle,
+      story: m.story,
+      question: m.question,
+      answers: currentShuffled.map(o => o.text)
+    };
+  }
+  return {
+    players: playersArr,
+    started: game.started,
+    finished: game.finished,
+    stage: game.stage,
+    score: game.score,
+    feed: game.feed,
+    mission
+  };
+}
+
+function broadcastState() {
+  const state = buildPublicState();
+  currentState = state;
+  render(state);
+  Object.values(clientConns).forEach(conn => {
+    if (conn && conn.open) conn.send({ type: 'state', state });
+  });
+}
+
+function createRoom(retries = 0) {
+  const btn = document.getElementById('createRoomBtn');
+  const errEl = document.getElementById('hostCreateError');
+  btn.disabled = true;
+  btn.textContent = 'CONECTANDO SALA…';
+  errEl.textContent = '';
+
+  const candidate = genCode();
+  if (peer) { try { peer.destroy(); } catch (e) {} }
+  peer = new Peer(PEER_PREFIX + candidate.toLowerCase(), { config: ICE_CONFIG });
+
+  peer.on('open', () => {
+    mode = 'host';
+    roomCode = candidate;
+    initGameState();
+    document.getElementById('lobbyPanel').classList.add('hidden');
+    document.getElementById('gamePanel').classList.remove('hidden');
+    document.getElementById('hostControls').classList.remove('hidden');
+    document.getElementById('displayCode').textContent = roomCode;
+    document.getElementById('roomTag').textContent = 'SALA ' + roomCode;
+    document.getElementById('headerGreeting').textContent = 'Panel de proyección (Docente)';
+    document.getElementById('hostMsg').textContent = 'Sala lista. Comparte el código ' + roomCode + ' o copia el enlace.';
+    broadcastState();
+  });
+
+  peer.on('connection', conn => {
+    let boundPlayerId = null;
+
+    conn.on('data', msg => {
+      if (!msg || typeof msg !== 'object') return;
+
+      if (msg.type === 'join') {
+        const name = String(msg.name || '').trim().slice(0, 18);
+        const g = (msg.gender === 'mujer') ? 'mujer' : 'hombre';
+        const av = (Number.isInteger(msg.avatar) && msg.avatar >= 0 && msg.avatar <= 7) ? msg.avatar : 0;
+        const pid = String(msg.playerId || ('p_' + Math.random().toString(36).slice(2, 9)));
+
+        if (!name) {
+          conn.send({ type: 'join_error', message: 'Escribe tu nombre.' });
+          return;
+        }
+        const existing = game.players[pid];
+        if (!existing) {
+          if (Object.keys(game.players).length >= MAX_PLAYERS) {
+            conn.send({ type: 'join_error', message: 'La sala ya llegó a 15 jugadores.' });
+            return;
+          }
+          if (game.started) {
+            conn.send({ type: 'join_error', message: 'La partida ya comenzó. Espera a que el docente reinicie.' });
+            return;
+          }
+          game.players[pid] = { id: pid, name, gender: g, avatar: av, points: 0, online: true };
+          pushFeed(`🚀 ${name} se unió a la misión.`);
+        } else {
+          existing.name = name;
+          existing.gender = g;
+          existing.avatar = av;
+          existing.online = true;
+          pushFeed(`🔄 ${name} volvió a conectarse.`);
+        }
+        boundPlayerId = pid;
+        clientConns[pid] = conn;
+        conn.send({ type: 'joined', playerId: pid, name, gender: g, avatar: av });
+        broadcastState();
+      }
+
+      if (msg.type === 'answer') {
+        if (!boundPlayerId || !game.players[boundPlayerId]) return;
+        if (!game.started || game.finished) return;
+        if (msg.stage !== game.stage) return; // evita doble respuesta al cambiar de estación
+
+        const opt = currentShuffled[msg.choice];
+        const m = MISSIONS[game.stage];
+        const player = game.players[boundPlayerId];
+        if (!opt) return;
+
+        if (opt.isCorrect) {
+          game.score += 100;
+          player.points += 100;
+          pushFeed(`✅ ${player.name} resolvió ${m.name}: ${m.explain}`);
+          game.stage += 1;
+          if (game.stage >= MISSIONS.length) {
+            game.finished = true;
+            pushFeed('🏆 ¡Misión completada! El organismo mantiene su glucemia.');
+          } else {
+            prepareStageOptions();
+            pushFeed(`⚡ ¡Estación ${game.stage + 1} desbloqueada!`);
+          }
+          conn.send({ type: 'feedback', correct: true, message: '¡Correcto! +100 pts · ' + m.explain });
+          broadcastState();
+        } else {
+          pushFeed(`💡 ${player.name} falló en ${m.name}. Pista: ${m.hint}`);
+          conn.send({ type: 'feedback', correct: false, message: 'No es esa respuesta. Pista: ' + m.hint });
+          broadcastState();
+        }
+      }
+    });
+
+    conn.on('close', () => {
+      if (boundPlayerId && game.players[boundPlayerId]) {
+        if (!game.started) {
+          const leftName = game.players[boundPlayerId].name;
+          delete game.players[boundPlayerId];
+          delete clientConns[boundPlayerId];
+          pushFeed(`👋 ${leftName} salió de la sala.`);
+        } else {
+          game.players[boundPlayerId].online = false;
+        }
+        broadcastState();
+      }
+    });
+  });
+
+  peer.on('error', err => {
+    if (err.type === 'unavailable-id' && retries < 3) {
+      createRoom(retries + 1);
+      return;
+    }
+    btn.disabled = false;
+    btn.textContent = 'CREAR SALA EN VIVO 📡';
+    errEl.textContent = 'No se pudo abrir la sala (' + err.type + '). Revisa tu conexión e intenta de nuevo.';
+  });
+}
+
+function hostStart() {
+  if (mode !== 'host') return;
+  if (Object.keys(game.players).length === 0) {
+    document.getElementById('hostMsg').textContent = 'Espera a que se conecte al menos un explorador.';
     return;
   }
-  playerName = input;
-  stage = 0; score = 0; mistakes = 0; stageMistakes = 0; locked = false; feed = [];
-  document.getElementById('joinError').textContent = '';
-  document.getElementById('joinPanel').classList.add('hidden');
-  document.getElementById('gamePanel').classList.remove('hidden');
-  document.getElementById('myName').textContent = playerName;
-  document.getElementById('myAvatar').textContent = FACES[gender][avatar];
-  pushLog(`🚀 ${playerName} inició la Aventura Metabólica.`);
-  loadStage();
+  game.started = true;
+  game.finished = false;
+  pushFeed('🚨 ¡La misión comenzó! Resuelvan el reto de la primera estación.');
+  document.getElementById('hostMsg').textContent = '¡Partida en curso!';
+  broadcastState();
 }
 
-function loadStage() {
-  stageMistakes = 0;
-  locked = false;
-  document.getElementById('notice').textContent = '';
-  if (stage < MISSIONS.length) {
-    currentOptions = shuffleOptions(MISSIONS[stage]);
-  }
-  render();
+function hostReset() {
+  if (mode !== 'host') return;
+  game.started = false;
+  game.finished = false;
+  game.stage = 0;
+  game.score = 0;
+  Object.keys(game.players).forEach(pid => {
+    if (!game.players[pid].online) {
+      delete game.players[pid];
+      delete clientConns[pid];
+    } else {
+      game.players[pid].points = 0;
+    }
+  });
+  prepareStageOptions();
+  game.feed = ['🔄 Partida reiniciada. Los exploradores conectados siguen en la sala.'];
+  document.getElementById('hostMsg').textContent = 'Partida reiniciada. Pulsa INICIAR cuando estén listos.';
+  broadcastState();
 }
 
-function choose(idx, btn) {
-  if (locked) return;
-  const q = MISSIONS[stage];
-  const opt = currentOptions[idx];
-  const notice = document.getElementById('notice');
-
-  if (opt.isCorrect) {
-    locked = true;
-    btn.classList.add('ok');
-    const gained = Math.max(50, 100 - stageMistakes * 25);
-    score += gained;
-    notice.style.color = '#8ff0bd';
-    notice.textContent = `✅ +${gained} pts · ${q.explain}`;
-    pushLog(`✅ Estación ${stage + 1} (${q.name}): ${q.explain}`);
-    stage++;
-    renderStatsAndMap();
-    setTimeout(() => loadStage(), 1700);
+function copyInviteLink() {
+  const url = `${location.origin}${location.pathname}?sala=${roomCode}`;
+  const btn = document.getElementById('copyLinkBtn');
+  const done = () => {
+    btn.textContent = '✅ Enlace copiado';
+    setTimeout(() => btn.textContent = '📋 Copiar enlace', 2000);
+  };
+  if (navigator.clipboard && navigator.clipboard.writeText) {
+    navigator.clipboard.writeText(url).then(done).catch(() => prompt('Copia este enlace:', url));
   } else {
-    mistakes++;
-    stageMistakes++;
-    btn.classList.add('bad');
-    btn.disabled = true;
-    notice.style.color = '#ffd166';
-    notice.textContent = `💡 No es esa. Pista: ${q.hint}`;
-    pushLog(`💡 Error en ${q.name}. Pista activada.`);
-    renderStatsAndMap();
+    prompt('Copia este enlace:', url);
   }
 }
 
-function renderStatsAndMap() {
-  document.getElementById('score').textContent = score;
-  document.getElementById('stage').textContent = `${stage}/${MISSIONS.length}`;
-  document.getElementById('mistakes').textContent = mistakes;
-  document.getElementById('progress').style.width = (stage / MISSIONS.length * 100) + '%';
+// ==========================================
+// LÓGICA DEL EXPLORADOR (JUGADOR)
+// ==========================================
+function joinRoom() {
+  const code = document.getElementById('roomCodeInput').value.trim().toUpperCase();
+  const name = document.getElementById('playerName').value.trim();
+  const errEl = document.getElementById('joinError');
+  const btn = document.getElementById('joinBtn');
+
+  if (code.length !== 4) { errEl.textContent = 'Escribe el código de 4 caracteres de la sala.'; return; }
+  if (!name) { errEl.textContent = 'Escribe tu nombre para entrar.'; return; }
+
+  errEl.textContent = '';
+  btn.disabled = true;
+  btn.textContent = 'CONECTANDO A LA SALA…';
+
+  if (peer) { try { peer.destroy(); } catch (e) {} }
+  peer = new Peer({ config: ICE_CONFIG });
+
+  let connected = false;
+  const timeout = setTimeout(() => {
+    if (!connected) {
+      btn.disabled = false;
+      btn.textContent = 'ENTRAR A LA AVENTURA 🚀';
+      errEl.textContent = 'No respondió la sala ' + code + '. Verifica el código o que el docente la tenga abierta.';
+      try { peer.destroy(); } catch (e) {}
+    }
+  }, 10000);
+
+  peer.on('open', () => {
+    hostConn = peer.connect(PEER_PREFIX + code.toLowerCase(), { reliable: true });
+
+    hostConn.on('open', () => {
+      hostConn.send({ type: 'join', playerId: myPlayerId, name, gender, avatar });
+    });
+
+    hostConn.on('data', msg => {
+      if (!msg || typeof msg !== 'object') return;
+      if (msg.type === 'join_error') {
+        clearTimeout(timeout);
+        btn.disabled = false;
+        btn.textContent = 'ENTRAR A LA AVENTURA 🚀';
+        errEl.textContent = msg.message;
+        hostConn.close();
+      }
+      if (msg.type === 'joined') {
+        connected = true;
+        clearTimeout(timeout);
+        mode = 'client';
+        roomCode = code;
+        document.getElementById('lobbyPanel').classList.add('hidden');
+        document.getElementById('gamePanel').classList.remove('hidden');
+        document.getElementById('roomTag').textContent = 'SALA ' + roomCode;
+        document.getElementById('headerGreeting').innerHTML = `Hola, ${esc(msg.name)} ${FACES[msg.gender][msg.avatar]}`;
+      }
+      if (msg.type === 'state') {
+        currentState = msg.state;
+        render(msg.state);
+      }
+      if (msg.type === 'feedback') {
+        const notice = document.getElementById('notice');
+        notice.textContent = msg.message;
+        notice.style.color = msg.correct ? '#8ff0bd' : '#ffd166';
+      }
+    });
+
+    hostConn.on('close', () => {
+      if (mode === 'client') {
+        const badge = document.getElementById('connBadge');
+        badge.textContent = 'DESCONECTADO DEL DOCENTE';
+        badge.style.color = '#ff82b2';
+        badge.style.borderColor = '#ff82b2';
+        document.getElementById('notice').textContent = 'Se perdió la conexión con la sala. Recarga la página para volver a entrar.';
+        document.getElementById('notice').style.color = '#ff82b2';
+      }
+    });
+  });
+
+  peer.on('error', err => {
+    clearTimeout(timeout);
+    btn.disabled = false;
+    btn.textContent = 'ENTRAR A LA AVENTURA 🚀';
+    if (err.type === 'peer-unavailable') {
+      errEl.textContent = 'No existe la sala ' + code + '. Revisa el código con tu docente.';
+    } else {
+      errEl.textContent = 'Error de conexión (' + err.type + '). Intenta de nuevo o usa datos móviles.';
+    }
+  });
+}
+
+function chooseAnswer(choiceIdx) {
+  if (mode !== 'client' || answerLocked || !hostConn || !hostConn.open || !currentState) return;
+  answerLocked = true;
+  hostConn.send({ type: 'answer', choice: choiceIdx, stage: currentState.stage });
+  setTimeout(() => { answerLocked = false; }, 900);
+}
+
+// ==========================================
+// RENDERIZADO COMPARTIDO
+// ==========================================
+function render(s) {
+  document.getElementById('score').textContent = s.score;
+  document.getElementById('stage').textContent = `${s.stage}/${MISSIONS.length}`;
+  document.getElementById('playerCount').textContent = `${s.players.length}/${MAX_PLAYERS}`;
+  document.getElementById('progress').style.width = (s.stage / MISSIONS.length * 100) + '%';
+
+  if (mode === 'host') {
+    const startBtn = document.getElementById('startBtn');
+    startBtn.disabled = s.started && !s.finished;
+  }
+
   document.getElementById('nodes').innerHTML = MISSIONS.map((m, i) => `
-    <div class="node ${i < stage ? 'done' : i === stage ? 'active' : ''}">
-      <div class="orb">${i < stage ? '✓' : m.icon}</div>
+    <div class="node ${i < s.stage ? 'done' : i === s.stage ? 'active' : ''}">
+      <div class="orb">${i < s.stage ? '✓' : m.icon}</div>
       ${esc(m.name)}
     </div>
   `).join('');
-}
 
-function render() {
-  renderStatsAndMap();
+  document.getElementById('players').innerHTML = s.players.length
+    ? s.players.map(p => `
+        <div class="player ${p.online ? '' : 'offline'}">
+          <span class="face">${FACES[p.gender][p.avatar]}</span>
+          <div><b>${esc(p.name)}</b><small>${p.points} pts${p.online ? '' : ' · offline'}</small></div>
+        </div>
+      `).join('')
+    : '<p class="mini">Aún no hay exploradores conectados.</p>';
+
+  document.getElementById('feed').innerHTML = s.feed.map(item => `<div>${esc(item)}</div>`).join('');
+
   const mBox = document.getElementById('mission');
-  if (stage >= MISSIONS.length) {
-    mBox.innerHTML = `
-      <span class="tag">COMPLETADO</span>
-      <h3>🏆 ¡MISIÓN CUMPLIDA, ${esc(playerName)}!</h3>
-      <p>Completaste las ${MISSIONS.length} estaciones con <b>${score} puntos</b> y ayudaste al organismo a mantener su glucemia.</p>
-      <button style="margin-top:10px" onclick="replaySamePlayer()">Jugar de nuevo ↻</button>
-    `;
-    pushLog(`🏆 ¡Misión completada con ${score} puntos!`);
+  if (s.finished) {
+    const top = s.players[0];
+    const mvp = top ? `<p>🥇 Destacado: <b>${esc(top.name)}</b> (${top.points} pts)</p>` : '';
+    mBox.innerHTML = `<h3>🏆 ¡MISIÓN CUMPLIDA!</h3><p>El equipo completó las 5 estaciones y ayudó a mantener la glucemia. ¡Son unos cracks de la bioquímica!</p>${mvp}`;
     return;
   }
-  const q = MISSIONS[stage];
+  if (!s.started) {
+    mBox.innerHTML = `<h3>⏳ Esperando al docente…</h3><p>Exploradores conectados: <b>${s.players.length}</b>. La misión comenzará pronto.</p>`;
+    return;
+  }
+  const q = s.mission;
+  if (!q) return;
+
+  if (lastRenderedStage !== s.stage) {
+    lastRenderedStage = s.stage;
+    if (mode === 'client') document.getElementById('notice').textContent = '';
+  }
+
+  const answersHtml = q.answers.map((a, i) => {
+    const letter = String.fromCharCode(65 + i);
+    if (mode === 'host') {
+      return `<button class="answer preview" disabled>${letter}. ${esc(a)}</button>`;
+    }
+    return `<button class="answer" onclick="chooseAnswer(${i})">${letter}. ${esc(a)}</button>`;
+  }).join('');
+
   mBox.innerHTML = `
-    <span class="tag">ESTACIÓN ${stage + 1} · ${esc(q.name)}</span>
+    <span class="tag">ESTACIÓN ${s.stage + 1} · ${esc(q.name)}</span>
     <h3>${esc(q.subtitle)}</h3>
     <p>${esc(q.story)}</p>
     <h3 style="font-size:18px;color:#fff">${esc(q.question)}</h3>
-    <div class="answers">
-      ${currentOptions.map((o, i) => `<button class="answer" onclick="choose(${i}, this)">${String.fromCharCode(65 + i)}. ${esc(o.text)}</button>`).join('')}
-    </div>
+    <div class="answers">${answersHtml}</div>
+    ${mode === 'host' ? '<p class="mini" style="margin-top:10px">Los exploradores responden desde sus celulares.</p>' : ''}
   `;
 }
 
-function replaySamePlayer() {
-  stage = 0; score = 0; mistakes = 0; feed = [];
-  pushLog(`🔄 ${playerName} reinició la misión.`);
-  loadStage();
-}
-
-function resetGame() {
-  document.getElementById('gamePanel').classList.add('hidden');
-  document.getElementById('joinPanel').classList.remove('hidden');
-}
-
-document.getElementById('playerName').addEventListener('keydown', e => {
-  if (e.key === 'Enter') startGame();
-});
+// ==========================================
+// INICIALIZACIÓN
+// ==========================================
 drawAvatars();
+const params = new URLSearchParams(location.search);
+const presetRoom = (params.get('sala') || '').trim().toUpperCase().slice(0, 4);
+if (presetRoom) {
+  document.getElementById('roomCodeInput').value = presetRoom;
+  switchTab('join');
+}
 </script>
 </body>
 </html>
