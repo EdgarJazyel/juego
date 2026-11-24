@@ -1,0 +1,355 @@
+<!doctype html>
+<html lang="es">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1">
+<title>Aventura Metabólica</title>
+<style>
+@import url('https://fonts.googleapis.com/css2?family=Nunito:wght@400;700;900&family=Orbitron:wght@600;800&display=swap');
+:root{--night:#071426;--panel:#10243b;--cyan:#56e0ec;--mint:#8ff0bd;--gold:#ffd166;--white:#f3f8ff;--muted:#adc2d7}
+*{box-sizing:border-box}
+body{margin:0;min-height:100vh;background:radial-gradient(ellipse at 50% -15%,#25577a 0,#0a1c32 48%,#050d19 100%);color:var(--white);font-family:Nunito,system-ui,sans-serif}
+button,input{font:inherit}
+button{cursor:pointer;border:0;border-radius:14px;padding:12px 17px;font-weight:900;background:linear-gradient(135deg,var(--cyan),var(--mint));color:#052031;box-shadow:0 5px 0 #247d88;transition:.15s}
+button:active{transform:translateY(3px);box-shadow:0 2px 0 #247d88}
+button:disabled{opacity:.45;cursor:not-allowed}
+button.secondary{background:#284660;color:white;box-shadow:none;border:1px solid #456887}
+.wrap{max-width:1050px;margin:auto;padding:14px}
+.top{text-align:center;padding:22px 10px 14px}
+.logo{font-family:Orbitron,sans-serif;letter-spacing:2px;font-size:clamp(24px,5vw,46px);font-weight:800;text-shadow:0 0 22px #56e0ec66}
+.tag{display:inline-block;padding:6px 12px;border:1px solid #4e9ab0;border-radius:99px;color:var(--cyan);font-size:12px;font-weight:900;letter-spacing:1px}
+.sub{color:var(--muted);margin:8px 0}
+.panel{background:linear-gradient(145deg,#142c46ee,#0c1d31f2);border:1px solid #315879;border-radius:22px;padding:18px;box-shadow:0 16px 45px #0005;margin:12px 0}
+.panel h2{margin:0 0 10px;color:var(--cyan);font-size:21px}
+.grid{display:grid;grid-template-columns:repeat(auto-fit,minmax(260px,1fr));gap:14px}
+.field{width:100%;padding:13px;border-radius:12px;border:1px solid #41617d;background:#07182b;color:white;margin:7px 0 13px;outline:none}
+.field:focus{border-color:var(--cyan)}
+.gender{display:flex;gap:10px}
+.gender button{flex:1;background:#24415d;color:#eaf7ff;box-shadow:none;border:1px solid #456887}
+.gender button.selected{background:#d9faff;color:#09243a;border:2px solid var(--cyan)}
+.avatar-grid{display:grid;grid-template-columns:repeat(4,1fr);gap:8px;margin:8px 0 15px}
+.avatar{padding:8px 3px;background:#203d58;color:white;border:2px solid transparent;box-shadow:none;border-radius:14px}
+.avatar.selected{border-color:var(--gold);background:#31536f}
+.avatar .face{display:block;font-size:34px}
+.avatar small{font-size:11px}
+.mini{color:var(--muted);font-size:13px}
+.hidden{display:none!important}
+.row{display:flex;gap:10px;align-items:center;justify-content:space-between;flex-wrap:wrap}
+.stats{display:grid;grid-template-columns:repeat(3,1fr);gap:9px}
+.stat{background:#0a1b2d;border:1px solid #284966;border-radius:15px;padding:12px;text-align:center}
+.stat b{display:block;font-family:Orbitron;font-size:24px;color:var(--gold)}
+.stat span{font-size:11px;color:var(--muted)}
+.map{position:relative;overflow:hidden;min-height:240px;border-radius:18px;border:1px solid #3a6785;background:radial-gradient(circle at 50% 50%,#194c67,#0a2138 67%,#08182b);padding:15px}
+.map:before{content:"";position:absolute;inset:0;background-image:linear-gradient(#6eddeb0b 1px,transparent 1px),linear-gradient(90deg,#6eddeb0b 1px,transparent 1px);background-size:28px 28px}
+.route{position:absolute;left:8%;right:8%;top:50%;height:4px;background:linear-gradient(90deg,#56e0ec,#8ff0bd,#ffd166);box-shadow:0 0 14px #56e0ec;transform:rotate(-4deg)}
+.nodes{position:relative;display:flex;justify-content:space-around;align-items:center;min-height:210px;gap:4px}
+.node{z-index:1;text-align:center;width:19%;font-size:12px;color:#d8f3ff}
+.orb{width:54px;height:54px;margin:0 auto 8px;border-radius:50%;display:grid;place-items:center;font-size:26px;background:#153c58;border:2px solid #64dce8;box-shadow:0 0 18px #56e0ec55;transition:.3s}
+.node.done .orb{background:#1d6c5b;border-color:var(--mint)}
+.node.active .orb{border:3px solid var(--gold);box-shadow:0 0 22px #ffd16699;transform:scale(1.12)}
+.mission{border:1px solid #42718c;background:linear-gradient(135deg,#173c59,#10243a);border-radius:18px;padding:18px}
+.mission h3{font-size:21px;margin:6px 0 9px}
+.answers{display:grid;gap:9px;margin-top:15px}
+.answer{background:#203f5b;color:white;text-align:left;box-shadow:none;border:1px solid #456783;padding:14px}
+.answer:hover{border-color:var(--cyan);background:#2b5575}
+.answer.ok{background:#19594b;border-color:var(--mint)}
+.answer.bad{background:#5c2233;border-color:#ff82b2}
+#notice{margin-top:14px;font-weight:800;min-height:24px;line-height:1.4}
+.log{display:grid;gap:6px;max-height:150px;overflow-y:auto}
+.log div{background:#0a1b2d;border:1px solid #24435f;border-radius:10px;padding:8px 11px;font-size:13px;color:#d6e9f8}
+footer{text-align:center;color:#7f9bb4;font-size:12px;padding:18px}
+@media(max-width:520px){
+  .wrap{padding:9px}.panel{padding:14px}.stats{gap:5px}.stat{padding:8px 3px}.stat b{font-size:19px}
+  .nodes{min-height:185px}.map{min-height:205px;padding:6px}.orb{width:42px;height:42px;font-size:21px}.node{font-size:10px}
+}
+</style>
+</head>
+<body>
+<div class="top">
+  <div class="tag">VIDEOJUEGO INTERACTIVO · BIOQUÍMICA HUMANA</div>
+  <div class="logo">🧬 AVENTURA METABÓLICA</div>
+  <p class="sub">Una misión. Cinco estaciones. Un organismo que necesita energía.</p>
+</div>
+
+<div class="wrap">
+  <!-- PANTALLA DE INICIO -->
+  <section class="panel" id="joinPanel">
+    <div class="grid">
+      <div>
+        <h2>🎮 Crea tu explorador</h2>
+        <label class="mini" for="playerName">Nombre o equipo</label>
+        <input id="playerName" class="field" maxlength="20" placeholder="Escribe tu nombre">
+        <label class="mini">Elige tu avatar</label>
+        <div class="gender">
+          <button type="button" id="gBoy" class="selected" onclick="setGender('hombre')">♂ Hombre</button>
+          <button type="button" id="gGirl" onclick="setGender('mujer')">♀ Mujer</button>
+        </div>
+        <div class="avatar-grid" id="avatarGrid"></div>
+        <button style="width:100%" onclick="startGame()">ENTRAR A LA AVENTURA 🚀</button>
+        <div id="joinError" class="mini" style="color:#ffd166;margin-top:8px"></div>
+      </div>
+      <div>
+        <h2>🌌 Tu misión</h2>
+        <p>El organismo está en ayuno y necesita mantener la glucosa en sangre. Viaja por los órganos, resuelve cada reto y activa las rutas metabólicas.</p>
+        <div class="stats">
+          <div class="stat"><b>5</b><span>ESTACIONES</span></div>
+          <div class="stat"><b>500</b><span>PTS MÁX</span></div>
+          <div class="stat"><b>100%</b><span>WEB</span></div>
+        </div>
+        <p class="mini" style="margin-top:14px">Si aciertas al primer intento ganas 100 pts completos. Si fallas, recibes una pista y puedes volver a intentar.</p>
+      </div>
+    </div>
+  </section>
+
+  <!-- PANTALLA DEL JUEGO -->
+  <section id="gamePanel" class="hidden">
+    <div class="panel">
+      <div class="row">
+        <div>
+          <span class="tag">MISIÓN EN CURSO</span>
+          <h2 style="margin-top:8px">Explorador: <span id="myName"></span> <span id="myAvatar"></span></h2>
+        </div>
+        <button class="secondary" onclick="resetGame()">Reiniciar ↻</button>
+      </div>
+      <div class="stats">
+        <div class="stat"><b id="score">0</b><span>PUNTOS</span></div>
+        <div class="stat"><b id="stage">0/5</b><span>ESTACIONES</span></div>
+        <div class="stat"><b id="mistakes">0</b><span>ERRORES</span></div>
+      </div>
+      <div style="height:10px;background:#233b52;border-radius:99px;margin:13px 0;overflow:hidden">
+        <div id="progress" style="height:100%;width:0;background:linear-gradient(90deg,#56e0ec,#8ff0bd);transition:.4s"></div>
+      </div>
+      <div class="map">
+        <div class="route"></div>
+        <div class="nodes" id="nodes"></div>
+      </div>
+    </div>
+
+    <div class="panel">
+      <h2>🧪 Reto de la estación</h2>
+      <div id="mission" class="mission"></div>
+      <div id="notice"></div>
+    </div>
+
+    <div class="panel">
+      <h2>📡 Bitácora de la misión</h2>
+      <div id="feed" class="log"></div>
+    </div>
+  </section>
+</div>
+
+<footer>AVENTURA METABÓLICA · Juego educativo de bioquímica</footer>
+
+<script>
+const MISSIONS = [
+  {
+    name: "Músculo",
+    icon: "💪",
+    subtitle: "Recupera los precursores",
+    story: "El músculo está trabajando. Identifica qué moléculas puede enviar al hígado para apoyar la producción de glucosa.",
+    question: "¿Qué pareja de moléculas puede viajar desde el músculo al hígado para participar en la gluconeogénesis?",
+    answers: ["Lactato y alanina", "Glucógeno y colesterol", "Bilis y urea"],
+    correct: 0,
+    hint: "Piensa en los productos del metabolismo muscular anaerobio y de aminoácidos.",
+    explain: "¡Exacto! El lactato y la alanina viajan al hígado y sirven como precursores para formar glucosa."
+  },
+  {
+    name: "Tejido adiposo",
+    icon: "🟠",
+    subtitle: "Libera combustible",
+    story: "Las reservas de grasa se movilizan. Encuentra el producto de la lipólisis que puede utilizar el hígado para formar glucosa.",
+    question: "Durante la lipólisis, ¿qué molécula puede utilizarse en la gluconeogénesis?",
+    answers: ["Glicerol", "Glucógeno", "Almidón"],
+    correct: 0,
+    hint: "Es el esqueleto de 3 carbonos que se libera al romper los triglicéridos.",
+    explain: "¡Bien! El glicerol liberado por el tejido adiposo entra como intermediario para la gluconeogénesis."
+  },
+  {
+    name: "Hígado",
+    icon: "🧬",
+    subtitle: "Activa la gluconeogénesis",
+    story: "Los precursores llegaron al hígado. Ahora activa la ruta que permite fabricar glucosa cuando el aporte de carbohidratos es bajo.",
+    question: "¿Cómo se llama la vía que sintetiza glucosa a partir de precursores no glucídicos?",
+    answers: ["Gluconeogénesis", "Glucólisis", "Glucogénesis"],
+    correct: 0,
+    hint: "Su nombre literalmente significa 'formación de glucosa nueva'.",
+    explain: "¡Correcto! La gluconeogénesis sintetiza glucosa a partir de lactato, glicerol y aminoácidos glucogénicos."
+  },
+  {
+    name: "Glucogenólisis",
+    icon: "⚡",
+    subtitle: "Abre la reserva de glucógeno",
+    story: "El organismo necesita una respuesta rápida. El hígado puede degradar su reserva de glucógeno.",
+    question: "¿Qué proceso degrada el glucógeno hepático para contribuir a mantener la glucemia?",
+    answers: ["Glucogenólisis", "Lipogénesis", "Glucogénesis"],
+    correct: 0,
+    hint: "El sufijo '-lisis' indica ruptura o degradación.",
+    explain: "¡Eso es! La glucogenólisis hepática degrada el glucógeno y libera glucosa hacia la sangre."
+  },
+  {
+    name: "Sangre",
+    icon: "🩸",
+    subtitle: "Completa la misión",
+    story: "La glucosa está lista para salir del hígado. Última decisión: ¿cuál es el objetivo principal de este proceso?",
+    question: "¿Cuál es la función principal de liberar glucosa hepática a la sangre durante el ayuno?",
+    answers: ["Mantener la glucemia", "Producir hormonas tiroideas", "Almacenar calcio"],
+    correct: 0,
+    hint: "El cerebro y los eritrocitos dependen de niveles estables de glucosa en sangre.",
+    explain: "¡Misión cumplida! El hígado mantiene la glucemia para abastecer a los tejidos dependientes de glucosa."
+  }
+];
+
+const FACES = {
+  hombre: ['🧑🏻‍🚀','👨🏻‍🔬','🧑🏽‍🔬','👨🏽‍🚀','🧑🏾‍🚀','👨🏼‍🔬','🧑🏿‍🔬','👨🏿‍🚀'],
+  mujer:  ['👩🏻‍🚀','👩🏻‍🔬','👩🏽‍🔬','👩🏽‍🚀','👩🏾‍🚀','👩🏼‍🔬','👩🏿‍🔬','👩🏿‍🚀']
+};
+
+let gender = 'hombre', avatar = 0, playerName = '';
+let stage = 0, score = 0, mistakes = 0, stageMistakes = 0;
+let locked = false, currentOptions = [], feed = [];
+
+function esc(s) {
+  return String(s).replace(/[&<>"']/g, c => ({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
+}
+
+function setGender(g) {
+  gender = g;
+  document.getElementById('gBoy').classList.toggle('selected', g === 'hombre');
+  document.getElementById('gGirl').classList.toggle('selected', g === 'mujer');
+  avatar = 0;
+  drawAvatars();
+}
+
+function drawAvatars() {
+  document.getElementById('avatarGrid').innerHTML = FACES[gender]
+    .map((f, i) => `<button type="button" class="avatar ${i === avatar ? 'selected' : ''}" onclick="avatar=${i};drawAvatars()"><span class="face">${f}</span><small>${i + 1}</small></button>`)
+    .join('');
+}
+
+function shuffleOptions(mission) {
+  const arr = mission.answers.map((text, idx) => ({ text, isCorrect: idx === mission.correct }));
+  for (let i = arr.length - 1; i > 0; i--) {
+    const j = Math.floor(Math.random() * (i + 1));
+    [arr[i], arr[j]] = [arr[j], arr[i]];
+  }
+  return arr;
+}
+
+function pushLog(msg) {
+  feed.unshift(msg);
+  feed = feed.slice(0, 6);
+  document.getElementById('feed').innerHTML = feed.map(m => `<div>${esc(m)}</div>`).join('');
+}
+
+function startGame() {
+  const input = document.getElementById('playerName').value.trim();
+  if (!input) {
+    document.getElementById('joinError').textContent = 'Escribe tu nombre o el de tu equipo.';
+    return;
+  }
+  playerName = input;
+  stage = 0; score = 0; mistakes = 0; stageMistakes = 0; locked = false; feed = [];
+  document.getElementById('joinError').textContent = '';
+  document.getElementById('joinPanel').classList.add('hidden');
+  document.getElementById('gamePanel').classList.remove('hidden');
+  document.getElementById('myName').textContent = playerName;
+  document.getElementById('myAvatar').textContent = FACES[gender][avatar];
+  pushLog(`🚀 ${playerName} inició la Aventura Metabólica.`);
+  loadStage();
+}
+
+function loadStage() {
+  stageMistakes = 0;
+  locked = false;
+  document.getElementById('notice').textContent = '';
+  if (stage < MISSIONS.length) {
+    currentOptions = shuffleOptions(MISSIONS[stage]);
+  }
+  render();
+}
+
+function choose(idx, btn) {
+  if (locked) return;
+  const q = MISSIONS[stage];
+  const opt = currentOptions[idx];
+  const notice = document.getElementById('notice');
+
+  if (opt.isCorrect) {
+    locked = true;
+    btn.classList.add('ok');
+    const gained = Math.max(50, 100 - stageMistakes * 25);
+    score += gained;
+    notice.style.color = '#8ff0bd';
+    notice.textContent = `✅ +${gained} pts · ${q.explain}`;
+    pushLog(`✅ Estación ${stage + 1} (${q.name}): ${q.explain}`);
+    stage++;
+    renderStatsAndMap();
+    setTimeout(() => loadStage(), 1700);
+  } else {
+    mistakes++;
+    stageMistakes++;
+    btn.classList.add('bad');
+    btn.disabled = true;
+    notice.style.color = '#ffd166';
+    notice.textContent = `💡 No es esa. Pista: ${q.hint}`;
+    pushLog(`💡 Error en ${q.name}. Pista activada.`);
+    renderStatsAndMap();
+  }
+}
+
+function renderStatsAndMap() {
+  document.getElementById('score').textContent = score;
+  document.getElementById('stage').textContent = `${stage}/${MISSIONS.length}`;
+  document.getElementById('mistakes').textContent = mistakes;
+  document.getElementById('progress').style.width = (stage / MISSIONS.length * 100) + '%';
+  document.getElementById('nodes').innerHTML = MISSIONS.map((m, i) => `
+    <div class="node ${i < stage ? 'done' : i === stage ? 'active' : ''}">
+      <div class="orb">${i < stage ? '✓' : m.icon}</div>
+      ${esc(m.name)}
+    </div>
+  `).join('');
+}
+
+function render() {
+  renderStatsAndMap();
+  const mBox = document.getElementById('mission');
+  if (stage >= MISSIONS.length) {
+    mBox.innerHTML = `
+      <span class="tag">COMPLETADO</span>
+      <h3>🏆 ¡MISIÓN CUMPLIDA, ${esc(playerName)}!</h3>
+      <p>Completaste las ${MISSIONS.length} estaciones con <b>${score} puntos</b> y ayudaste al organismo a mantener su glucemia.</p>
+      <button style="margin-top:10px" onclick="replaySamePlayer()">Jugar de nuevo ↻</button>
+    `;
+    pushLog(`🏆 ¡Misión completada con ${score} puntos!`);
+    return;
+  }
+  const q = MISSIONS[stage];
+  mBox.innerHTML = `
+    <span class="tag">ESTACIÓN ${stage + 1} · ${esc(q.name)}</span>
+    <h3>${esc(q.subtitle)}</h3>
+    <p>${esc(q.story)}</p>
+    <h3 style="font-size:18px;color:#fff">${esc(q.question)}</h3>
+    <div class="answers">
+      ${currentOptions.map((o, i) => `<button class="answer" onclick="choose(${i}, this)">${String.fromCharCode(65 + i)}. ${esc(o.text)}</button>`).join('')}
+    </div>
+  `;
+}
+
+function replaySamePlayer() {
+  stage = 0; score = 0; mistakes = 0; feed = [];
+  pushLog(`🔄 ${playerName} reinició la misión.`);
+  loadStage();
+}
+
+function resetGame() {
+  document.getElementById('gamePanel').classList.add('hidden');
+  document.getElementById('joinPanel').classList.remove('hidden');
+}
+
+document.getElementById('playerName').addEventListener('keydown', e => {
+  if (e.key === 'Enter') startGame();
+});
+drawAvatars();
+</script>
+</body>
+</html>
